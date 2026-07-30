@@ -3,9 +3,7 @@
 ## Overview
 Production domain: **https://hustleclub.app**
 
-A single-page landing site for 14–18 year olds who want to start a small first business. The page IS the product: a Google-simple hero with one input that opens an on-page AI coaching chat ("Scout", driven by a detailed mentoring system prompt), a saved/resumable conversation, and a generated printable "Hustler Business Plan" once the teen has run a real-world trial week.
-
-**Scout is provider-agnostic.** Mistral is the default; OpenAI, Groq, OpenRouter, Anthropic, a local Ollama, or any OpenAI-compatible endpoint work by changing one line in `.env` — no code edits. See **[CREDENTIALS.md](CREDENTIALS.md)**.
+A single-page landing site for 14–18 year olds who want to start a small first business. The page IS the product: a Google-simple hero with one input that opens an on-page AI coaching chat ("Scout", powered by the Anthropic API with a detailed mentoring system prompt), a saved/resumable conversation, and a generated printable "Hustler Business Plan" once the teen has run a real-world trial week.
 
 ## About the Design Files
 The files in this bundle are **design references created in HTML** — a working prototype showing the intended look and behavior, not production code to ship as-is. The task is to **recreate this design in the target codebase's environment** (React/Next.js, Vue, etc.) using its established patterns — or, if no codebase exists yet, pick an appropriate framework and implement it there. That said, the prototype is fully functional and can be run locally for user testing right away (see below).
@@ -13,72 +11,36 @@ The files in this bundle are **design references created in HTML** — a working
 ## Fidelity
 **High-fidelity.** Colors, typography, spacing, copy, interactions and the full chat/plan logic are final-intent. Recreate pixel-perfectly.
 
-## Running it locally
+## Running the prototype locally (for user testing)
 
-```bash
-npm install
-cp .env.example .env      # then add MISTRAL_API_KEY (or another provider's)
-npm run check             # verifies the key works and lists available models
-npm start                 # http://localhost:3000
+1. Keep all four files in one folder (`Hustle Club Landing.dc.html`, `support.js`, `image-slot.js`, `.image-slots.state.json`).
+2. Serve over HTTP — don't open via `file://` (module/fetch restrictions). Either:
+   - VS Code: install the **Live Server** extension → right-click the .dc.html → "Open with Live Server", or
+   - Terminal: `python3 -m http.server 8000` then open `http://localhost:8000/Hustle%20Club%20Landing.dc.html`
+3. **Enable the AI planner**: open the .dc.html, find the `DEPLOYMENT CONFIG` block inside the `<script data-dc-script>` section and paste an Anthropic API key into `API_KEY = ''`. Without it, the page renders fully but chat replies say "Scout's not plugged in yet."
+   - ⚠️ A key in page code is visible to anyone who views source. Fine for private user testing. For any public deployment, host a tiny server proxy that holds the key and set `API_URL` to the proxy instead (see below).
+4. Requires internet for Google Fonts, the Anthropic API, and the IP-geolocation lookup (`ipapi.co` — falls back to device timezone if blocked).
+
+### Minimal proxy for public deployment (Node/Express)
+```js
+import express from 'express';
+const app = express();
+app.use(express.json());
+app.post('/api/chat', async (req, res) => {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify(req.body)
+  });
+  res.status(r.status).json(await r.json());
+});
+app.listen(3000);
 ```
-
-`npm start` serves the page **and** the `/api/chat` proxy together — that is the supported way to run it. A plain static server (Live Server, `python3 -m http.server`) renders the page fine but nothing answers `/api/chat`, so Scout says "Scout's not plugged in yet."
-
-Requires internet for Google Fonts, the AI provider, and the IP-geolocation lookup (`ipapi.co` — falls back to device timezone if blocked).
-
-### AI provider and credentials
-
-**No API key exists anywhere in the front-end.** `index.html` posts to `/api/chat`; `server.js` supplies the key from `.env` or from a secret file on disk. Anyone can view-source the page safely.
-
-| | |
-| --- | --- |
-| Change provider / model / key | Edit `.env` — see **[CREDENTIALS.md](CREDENTIALS.md)** |
-| Verify a change | `npm run check` |
-| See what's live | `GET /api/llm/status` (reports a key *fingerprint*, never the key) |
-| List usable models | `GET /api/llm/models` |
-
-Supported out of the box: `mistral` (default), `openai`, `groq`, `openrouter`, `anthropic`, `ollama`, plus `custom` for any other OpenAI-compatible endpoint via `LLM_BASE_URL`.
-
-Rotating a key with zero downtime: point `MISTRAL_API_KEY_FILE` at a file outside the repo. That file is re-read on every request, so overwriting it swaps the key with no restart and no redeploy.
-
-Cost control: the browser cannot choose the model, the system prompt, or `max_tokens` — the server decides all three — and `/api/chat` is rate-limited per IP. See [SECURITY.md](SECURITY.md).
-
-### Usage log
-
-Every AI request appends one line to `logs/usage.log`:
-
-```text
-2026-07-30T07:57:16.638Z  event=chat  status=ok  region="New Zealand / Wellington"  tz="Pacific/Auckland"  visitor=ad45800f  provider=mistral  model=mistral-medium-latest  tokens=9/5  ms=105
-```
-
-```bash
-tail -f logs/usage.log                        # watch live
-grep -c 'event=plan' logs/usage.log           # plans generated
-grep 'region="New Zealand' logs/usage.log     # usage by region
-grep -o 'visitor=\w*' logs/usage.log | sort -u | wc -l   # unique visitors
-```
-
-`status=` is `ok`, `blocked-input`, `blocked-output`, `rate-limited`, `timeout` or `upstream-error` — so the log doubles as an abuse and reliability view. Rotates at 10 MB. Configure or disable it in `.env`.
-
-Two deliberate privacy choices, because the audience is minors: **no conversation content is ever written**, and **IPs are hashed** into a short `visitor=` id rather than stored. See [SECURITY.md](SECURITY.md#privacy).
-
-`region` is what the visitor's browser reported, so treat it as indicative, not authoritative.
-
-### Security
-
-`/api/chat` decides the system prompt, model and token budget server-side; the browser cannot override any of them. Guardrails, rate limits and plan sanitising are all enforced on the server. Read [SECURITY.md](SECURITY.md) before changing that endpoint, and run the regression suite:
-
-```bash
-npm test
-```
-
-### Where the LLM code lives
-
-- [credentials.js](credentials.js) — key lookup order, `.env` parsing, secret files, hot reload.
-- [llm-providers.js](llm-providers.js) — one adapter per provider. Adding a provider is one entry in the `PROVIDERS` map.
-- [server.js](server.js) — the proxy, status routes, and `--check`.
-
-Each opens with a comment block explaining its contract. Nothing outside these three files knows which AI vendor is in use.
+Then set `API_URL = '/api/chat'` and leave `API_KEY` empty. Add rate limiting per IP on the proxy for real cost control (the in-page daily quota is localStorage-based and trivially resettable).
 
 ### User-testing notes
 - All state is in `localStorage`: `hustleclub_v1` (conversation), `hustleclub_first` (first-visit timestamp, drives the 24-hour "speed-runner" notice), `hustleclub_quota` (daily caps: 60 chat calls, 4 plan generations per device/day).
@@ -135,7 +97,7 @@ Max-width 720px. 5 items: white cards, 3px border, radius 16, 4px 4px 0 shadow. 
 Fixed overlay `rgba(38,36,59,.55)`, centered card max-width 760px, max-height 88vh, 3px border, radius 18, 10px 10px 0 shadow. Yellow header: "YOUR HUSTLER BUSINESS PLAN" (Bungee 17px) + "Print / Save PDF" (pink), "Email it" (purple), "Close" (white) buttons. Scrollable body renders the AI-generated plan (h2 Bungee 22px, body 14px/1.55). If generated within 24h of first visit, a yellow "Whoa, speed-runner ⚡" encouragement card sits on top (access never blocked). Print uses a `@media print` visibility swap so only the plan prints.
 
 ## Interactions & Behavior
-- **Chat flow**: user text/option-tap → appended to messages → POST to `/api/chat` with `{system, messages, max_tokens}` (system prompt + full history) → the server translates that into the configured provider's format → reply appended. On reply, the chat scrolls to the **top of the new message** (not the bottom). On user send, scrolls to bottom.
+- **Chat flow**: user text/option-tap → appended to messages → POST to Anthropic Messages API (system prompt + full history) → reply appended. On reply, the chat scrolls to the **top of the new message** (not the bottom). On user send, scrolls to bottom.
 - **Options protocol**: the system prompt requires Scout to end every question with a final line `OPTIONS: a | b | c`; the client strips it from display and renders the radio rows for the latest message only. Special option labels: "Start over"/"start fresh" → reset flow; "Get my printable plan" → plan generation; "Try again" → retry last failed send.
 - **Persistence / resume**: conversation saved to localStorage after every message. On revisit, chat restores and Scout locally appends: "Heads up: someone on this device already has a hustle in motion… Is that you?" with options *That's me — continue / I ran my trial / Get my printable plan / Someone else — start fresh*. Start-fresh confirms with "the business plan and trial already on this device get wiped for good."
 - **Geo detection**: on load, guess country from device timezone, refine via `https://ipapi.co/json/` (4s abort). Passed to the model as a *guess to confirm*, used to offer city/suburb options.

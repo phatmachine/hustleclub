@@ -1,0 +1,35 @@
+services:
+  hustleclub:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-3000}:3000"
+
+    volumes:
+      # The usage log lives on the host, so it survives rebuilds.
+      # Read it with: tail -f logs/usage.log
+      - ./logs:/app/logs
+
+    # ── Rotating a key without a restart ──────────────────────
+    # env_file copies .env into the container at start-up, so editing
+    # .env later needs `docker compose up -d --force-recreate`.
+    #
+    # To rotate keys with no downtime, keep the key in a file instead
+    # and uncomment the three blocks below (adjust for your provider).
+    # The server re-reads that file on every request, so updating it is
+    # all it takes. Details: CREDENTIALS.md → "Option B".
+    #
+    # environment:
+    #   MISTRAL_API_KEY_FILE: /run/secrets/mistral_api_key
+    # secrets:
+    #   - mistral_api_key
+
+    # ── If nginx / Cloudflare sits in front of this container ──
+    # Set TRUST_PROXY=true in .env, or every visitor shares one
+    # rate-limit bucket because they all appear to come from the proxy.
+
+# secrets:
+#   mistral_api_key:
+#     file: /etc/hustleclub/mistral.key    # chmod 600, never in the repo

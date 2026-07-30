@@ -1,0 +1,12 @@
+# Normalise line endings in the repo to LF.
+# This project is developed on Windows but runs in a Linux container,
+# so committing CRLF would bite anything the shell has to read.
+* text=auto eol=lf
+
+# Binary assets must never be line-ending converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.pdf binary

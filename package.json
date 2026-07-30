@@ -1,0 +1,14 @@
+{
+  "name": "hustleclub",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node server.js --check",
+    "test": "node test/security.mjs"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

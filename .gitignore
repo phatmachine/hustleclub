@@ -1,0 +1,11 @@
+node_modules/
+
+# Credentials — never commit any of these.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Usage log: contains visitor metadata (region, timestamps).
+logs/

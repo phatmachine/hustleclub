@@ -1,0 +1,14 @@
+node_modules
+.git
+*.log
+design_handoff_hustle_club
+
+# Credentials must never be baked into an image.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Runtime data — mounted as a volume, not copied in.
+logs
