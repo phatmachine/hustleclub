@@ -1,1 +1,30 @@
 
+version: "3.9"
+
+services:
+  hustleclub-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hustleclub-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - "3000"
+    volumes:
+      - .:/app
+    working_dir: /app
+    networks:
+      - traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hustleclub.rule=Host(`hustleclub.app`) || Host(`www.hustleclub.app`)"
+      - "traefik.http.routers.hustleclub.entrypoints=websecure"
+      - "traefik.http.routers.hustleclub.tls=true"
+      - "traefik.http.routers.hustleclub.tls.certresolver=letsencrypt"
+      - "traefik.http.services.hustleclub.loadbalancer.server.port=3000"
+
+networks:
+  traefik-proxy:
+    external: true
