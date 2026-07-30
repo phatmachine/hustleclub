@@ -241,7 +241,7 @@ app.use((req, res, next) => {
       "img-src 'self' data: https:; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
-      "script-src 'self' 'unsafe-inline' https://unpkg.com; " +
+      "script-src 'self' 'unsafe-inline'; " +
       "connect-src 'self' https://ipapi.co; " +
       "object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
   });
