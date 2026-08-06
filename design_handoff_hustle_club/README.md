@@ -3,7 +3,7 @@
 ## Overview
 Production domain: **https://hustleclub.app**
 
-A single-page landing site for 14–18 year olds who want to start a small first business. The page IS the product: a Google-simple hero with one input that opens an on-page AI coaching chat ("Scout", powered by the Anthropic API with a detailed mentoring system prompt), a saved/resumable conversation, and a generated printable "Hustler Business Plan" once the teen has run a real-world trial week.
+A single-page landing site for 14–18 year olds who want to start a small first business. The page IS the product: a Google-simple hero with one input that opens an on-page AI coaching chat ("Scout", powered by the Anthropic API with a detailed mentoring system prompt), a saved/resumable conversation, and a generated printable "Hustler Business Plan" once the teen has tested their idea with real customers.
 
 ## About the Design Files
 The files in this bundle are **design references created in HTML** — a working prototype showing the intended look and behavior, not production code to ship as-is. The task is to **recreate this design in the target codebase's environment** (React/Next.js, Vue, etc.) using its established patterns — or, if no codebase exists yet, pick an appropriate framework and implement it there. That said, the prototype is fully functional and can be run locally for user testing right away (see below).
@@ -75,7 +75,7 @@ One page, one view, with three exclusive states in the hero area.
 - Input row (free-text questions only): pill input + pink "SEND" (Bungee 14px). 50% opacity + pointer-events none while busy.
 
 ### 4. Three-step strip
-Auto-fit grid (min 220px), white cards, 3px border, radius 16, 5px 5px 0 shadow. Big Bungee numeral (26px, pink/teal/purple) + Space Grotesk 700 15px label: "Chat it out with Scout" / "Run your trial week for real" / "Come back, grab your PDF plan".
+Auto-fit grid (min 220px), white cards, 3px border, radius 16, 5px 5px 0 shadow. Big Bungee numeral (26px, pink/teal/purple) + Space Grotesk 700 15px label: "Chat it out with Scout" / "Go test your idea - sell to 10 people this week!" / "Come back, grab your PDF plan".
 
 ### 5. "Real kids. Real hustles." (photos)
 H2 Bungee clamp(26–38px); sub 16px. Three polaroid cards (white, 3px border, 6px 6px 0 shadow, padding 12px, rotated -3° / 2° / -1.5°), each holding a 240×240 photo slot and a monospace 13px caption: "the mowing crew", "the ice-cream stall", "car detailing shine".

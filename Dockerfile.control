@@ -1,0 +1,36 @@
+# Control-panel server Dockerfile for HustleClub
+# Based on Node 24 with Python 3 for stress testing
+FROM node:24-alpine
+
+# Install Python 3 and required dependencies
+RUN apk add --no-cache python3 py3-pip && \
+    ln -sf python3 /usr/bin/python && \
+    ln -sf pip3 /usr/bin/pip && \
+    pip install --break-system-packages requests
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Install Node dependencies
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy all application files
+COPY . .
+
+# Create logs directory and set permissions
+RUN mkdir -p /app/logs && \
+    chown -R node:node /app/logs
+
+# Ensure stress test script is executable
+RUN chmod +x /app/stress_test_no_limits.py
+
+# Drop root privileges
+USER node
+
+# Expose control-panel port
+EXPOSE 3002
+
+# Start the control-panel server
+CMD ["node", "control-server.js"]

@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <title>HustleClub - Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        .terminal-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        .terminal-output .prompt { color: #667eea; }
+        .terminal-output .success { color: #2ed573; }
+        .terminal-output .error { color: #ff4757; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-600 to-indigo-700 min-h-screen p-5">
+    <div class="max-w-7xl mx-auto">
+        <!-- Login Section -->
+        <div id="login-section" class="max-w-md mx-auto mt-20 bg-white p-8 rounded-xl shadow-2xl text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">🔒 HustleClub Control</h2>
+            <p class="text-gray-600 mb-6">Please authenticate to access the control panel</p>
+
+            <div id="login-error" class="text-red-500 mb-4 p-3 bg-red-50 rounded-lg hidden"></div>
+
+            <input type="password" id="admin-password" placeholder="Enter password" autocomplete="off"
+                   class="w-full p-4 mb-4 border-2 border-gray-200 rounded-lg text-lg focus:outline-none focus:border-purple-600">
+            <button onclick="authenticate()" class="w-full p-4 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg text-lg font-semibold cursor-pointer hover:shadow-lg transition-all duration-300">
+                <span id="login-loading" class="hidden"></span>
+                Sign In
+            </button>
+        </div>
+        
+        <!-- Main control panel -->
+        <div id="admin-dashboard" class="hidden">
+            <div class="bg-white p-6 rounded-xl shadow-xl mb-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">🚀 HustleClub Control Panel</h1>
+                <p class="text-gray-600">Manage and monitor your HustleClub application</p>
+            </div>
+            
+            <div class="flex gap-4 mb-6 flex-wrap">
+                <button onclick="showSection('logs')" class="px-6 py-3 bg-white text-gray-700 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300 active">
+                    📋 Review Logs
+                </button>
+                <button onclick="showSection('stress-test')" class="px-6 py-3 bg-white text-gray-700 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300">
+                    🧪 Run Stress Test
+                </button>
+                <button onclick="showSection('settings')" class="px-6 py-3 bg-white text-gray-700 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300">
+                    ⚙️ Settings
+                </button>
+            </div>
+            
+            <!-- Logs Section -->
+            <div id="logs-section" class="bg-white p-6 rounded-xl shadow-xl admin-section active">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+                    <h2 class="text-2xl font-bold text-gray-800">📋 Usage Logs</h2>
+                    <div class="flex gap-2">
+                        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors" onclick="refreshLogs()">
+                            🔄 Refresh
+                        </button>
+                        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors" onclick="clearLogs()">
+                            🗑️ Clear
+                        </button>
+                        <button class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg font-medium hover:shadow-md transition-colors" onclick="downloadLogs()">
+                            💾 Download
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filter Controls -->
+                <div id="logs-filter" class="mb-6 bg-gray-50 p-4 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="form-group">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Filter by Date</label>
+                            <input type="date" id="log-date-filter" onchange="filterLogs()" 
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Filter by Type</label>
+                            <select id="log-type-filter" onchange="filterLogs()" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                                <option value="all">All Entries</option>
+                                <option value="chat">Chat Requests</option>
+                                <option value="plan">Plan Requests</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
+                            <input type="text" id="log-search" placeholder="Search logs..." oninput="filterLogs()" 
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        </div>
+                        <div class="form-group">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Entries per page</label>
+                            <select id="entries-per-page" onchange="filterLogs()" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                                <option value="50">50</option>
+                                <option value="100" selected>100</option>
+                                <option value="200">200</option>
+                                <option value="500">500</option>
+                                <option value="1000">1000</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Logs Statistics -->
+                <div id="logs-stats" class="mb-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl">
+                            <h3 class="text-purple-600 font-semibold text-sm mb-2">Total Entries</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="total-entries">0</div>
+                            <div class="text-xs text-gray-500 mt-1">log entries</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-xl">
+                            <h3 class="text-blue-600 font-semibold text-sm mb-2">Chat Requests</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="chat-requests">0</div>
+                            <div class="text-xs text-gray-500 mt-1">requests</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-4 rounded-xl">
+                            <h3 class="text-indigo-600 font-semibold text-sm mb-2">Plan Requests</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="plan-requests">0</div>
+                            <div class="text-xs text-gray-500 mt-1">requests</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl">
+                            <h3 class="text-purple-600 font-semibold text-sm mb-2">Unique Visitors</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="unique-visitors">0</div>
+                            <div class="text-xs text-gray-500 mt-1">visitors</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Logs Content -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b-2 border-gray-200">
+                                    <th class="text-left p-3 font-semibold text-gray-700">Timestamp</th>
+                                    <th class="text-left p-3 font-semibold text-gray-700">Type</th>
+                                    <th class="text-left p-3 font-semibold text-gray-700">IP Address</th>
+                                    <th class="text-left p-3 font-semibold text-gray-700">User Agent</th>
+                                    <th class="text-left p-3 font-semibold text-gray-700">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-content">
+                                <tr><td colspan="5" class="p-4 text-center text-gray-500">Loading logs...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                <div id="pagination" class="mt-6 flex justify-center gap-2"></div>
+            </div>
+            
+            <!-- Stress Test Section -->
+            <div id="stress-test-section" class="bg-white p-6 rounded-xl shadow-xl admin-section hidden">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+                    <h2 class="text-2xl font-bold text-gray-800">🧪 Stress Test</h2>
+                    <div class="flex gap-2">
+                        <button class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg font-medium hover:shadow-md transition-colors" onclick="runStressTest()">
+                            ▶️ Run Test
+                        </button>
+                        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors" onclick="stopStressTest()">
+                            ⏹️ Stop
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="form-group">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">API Endpoint</label>
+                        <input type="text" id="api-endpoint" value="http://localhost:3000/api/chat" placeholder="API endpoint URL"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    </div>
+                    <div class="form-group">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Number of Users</label>
+                        <input type="number" id="user-count" value="10" min="1" max="50"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    </div>
+                    <div class="form-group">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Queries per User</label>
+                        <input type="number" id="queries-per-user" value="5" min="1" max="20"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    </div>
+                    <div class="form-group">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Delay Between Queries (seconds)</label>
+                        <input type="number" id="query-delay" value="1.0" min="0.1" max="10" step="0.1"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    </div>
+                </div>
+                
+                <div id="test-results" class="hidden">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">📊 Test Results</h3>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl">
+                            <h3 class="text-purple-600 font-semibold text-sm mb-2">Test Duration</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="test-duration">0s</div>
+                            <div class="text-xs text-gray-500 mt-1">seconds</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-xl">
+                            <h3 class="text-blue-600 font-semibold text-sm mb-2">Total Requests</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="total-requests">0</div>
+                            <div class="text-xs text-gray-500 mt-1">requests</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-4 rounded-xl">
+                            <h3 class="text-indigo-600 font-semibold text-sm mb-2">Successful</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="successful-requests">0</div>
+                            <div class="text-xs text-gray-500 mt-1">requests</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl">
+                            <h3 class="text-purple-600 font-semibold text-sm mb-2">Failed</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="failed-requests">0</div>
+                            <div class="text-xs text-gray-500 mt-1">requests</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl">
+                            <h3 class="text-purple-600 font-semibold text-sm mb-2">Input Tokens</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="input-tokens">0</div>
+                            <div class="text-xs text-gray-500 mt-1">tokens</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-xl">
+                            <h3 class="text-blue-600 font-semibold text-sm mb-2">Output Tokens</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="output-tokens">0</div>
+                            <div class="text-xs text-gray-500 mt-1">tokens</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-4 rounded-xl">
+                            <h3 class="text-indigo-600 font-semibold text-sm mb-2">Total Tokens</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="total-tokens">0</div>
+                            <div class="text-xs text-gray-500 mt-1">tokens</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl">
+                            <h3 class="text-purple-600 font-semibold text-sm mb-2">Estimated Cost</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="estimated-cost">$0.00</div>
+                            <div class="text-xs text-gray-500 mt-1">USD</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl">
+                            <h3 class="text-purple-600 font-semibold text-sm mb-2">Cost per Request</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="cost-per-request">$0.00</div>
+                            <div class="text-xs text-gray-500 mt-1">USD</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-xl">
+                            <h3 class="text-blue-600 font-semibold text-sm mb-2">Cost per User</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="cost-per-user">$0.00</div>
+                            <div class="text-xs text-gray-500 mt-1">USD</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-4 rounded-xl">
+                            <h3 class="text-indigo-600 font-semibold text-sm mb-2">Avg Response Time</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="avg-response-time">0s</div>
+                            <div class="text-xs text-gray-500 mt-1">seconds</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl">
+                            <h3 class="text-purple-600 font-semibold text-sm mb-2">Requests/sec</h3>
+                            <div class="text-2xl font-bold text-gray-800" id="requests-per-second">0.00</div>
+                            <div class="text-xs text-gray-500 mt-1">req/s</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-2">Progress</h4>
+                        <div class="bg-gray-200 rounded-full h-6 mb-4">
+                            <div class="bg-gradient-to-r from-purple-600 to-indigo-700 h-6 rounded-full transition-all duration-500" 
+                                 id="test-progress" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="terminal-output" id="test-output"></div>
+                </div>
+            </div>
+            
+            <!-- Settings Section -->
+            <div id="settings-section" class="bg-white p-6 rounded-xl shadow-xl admin-section hidden">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+                    <h2 class="text-2xl font-bold text-gray-800">⚙️ Settings</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Change Admin Password</h3>
+                        <div id="password-change-message" class="mb-4 p-3 rounded-lg hidden"></div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                            <input type="password" id="current-password" placeholder="Enter current password"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+                            <input type="password" id="new-password" placeholder="Enter new password"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        </div>
+                        
+                        <button onclick="changePassword()" class="w-full p-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg font-semibold cursor-pointer hover:shadow-md transition-colors">
+                            Change Password
+                        </button>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">System Information</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">App Version:</span>
+                                <span class="font-semibold text-gray-800" id="system-version">Loading...</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">LLM Provider:</span>
+                                <span class="font-semibold text-gray-800" id="system-provider">Loading...</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Model:</span>
+                                <span class="font-semibold text-gray-800" id="system-model">Loading...</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Chat Rate Limit:</span>
+                                <span class="font-semibold text-gray-800" id="system-chat-limit">Loading...</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Plan Rate Limit:</span>
+                                <span class="font-semibold text-gray-800" id="system-plan-limit">Loading...</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Server Uptime:</span>
+                                <span class="font-semibold text-gray-800" id="system-uptime">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global state
+        let allLogs = [];
+        let filteredLogs = [];
+        let currentPage = 1;
+        let entriesPerPage = 100;
+        let isAuthenticated = false;
+        let stressTestRunning = false;
+        
+        // DOM elements
+        const loginSection = document.getElementById('login-section');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const loginError = document.getElementById('login-error');
+        const loginLoading = document.getElementById('login-loading');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default entries per page
+            document.getElementById('entries-per-page').value = entriesPerPage;
+            
+            // Load system info
+            if (isAuthenticated) {
+                loadSystemInfo();
+            }
+        });
+        
+        // Authentication
+        function authenticate() {
+            const password = document.getElementById('admin-password').value;
+            
+            if (!password) {
+                showLoginError('Please enter a password');
+                return;
+            }
+            
+            loginLoading.classList.remove('hidden');
+            
+            fetch('/api/admin/system-info', {
+                headers: {
+                    'Authorization': 'Bearer ' + password
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    isAuthenticated = true;
+                    loginSection.classList.add('hidden');
+                    adminDashboard.classList.remove('hidden');
+                    loadSystemInfo();
+                    loadLogs();
+                } else {
+                    showLoginError('Invalid password');
+                }
+            })
+            .catch(error => {
+                showLoginError('Authentication failed: ' + error.message);
+            })
+            .finally(() => {
+                loginLoading.classList.add('hidden');
+            });
+        }
+        
+        function showLoginError(message) {
+            loginError.textContent = message;
+            loginError.classList.remove('hidden');
+        }
+        
+        // Section navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.classList.add('hidden');
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.admin-nav button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected section
+            const section = document.getElementById(sectionName + '-section');
+            if (section) {
+                section.classList.remove('hidden');
+                section.classList.add('active');
+            }
+            
+            // Add active class to clicked button
+            const activeButton = Array.from(document.querySelectorAll('.admin-nav button')).find(
+                button => button.getAttribute('onclick') && button.getAttribute('onclick').includes(sectionName)
+            );
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
+            
+            // Load section-specific data
+            if (sectionName === 'logs') {
+                loadLogs();
+            } else if (sectionName === 'system-info') {
+                loadSystemInfo();
+            }
+        }
+        
+        // Load system information
+        function loadSystemInfo() {
+            const password = document.getElementById('admin-password').value;
+            
+            fetch('/api/admin/system-info', {
+                headers: {
+                    'Authorization': 'Bearer ' + password
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('system-version').textContent = data.appVersion || 'Unknown';
+                document.getElementById('system-provider').textContent = data.llmProvider || 'Unknown';
+                document.getElementById('system-model').textContent = data.model || 'Unknown';
+                document.getElementById('system-chat-limit').textContent = data.rateLimits?.chat || 'Unknown';
+                document.getElementById('system-plan-limit').textContent = data.rateLimits?.plan || 'Unknown';
+                document.getElementById('system-uptime').textContent = formatUptime(data.server?.uptime || 0);
+            })
+            .catch(error => {
+                console.error('Failed to load system info:', error);
+            });
+        }
+        
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            const parts = [];
+            if (days > 0) parts.push(days + 'd');
+            if (hours > 0) parts.push(hours + 'h');
+            if (minutes > 0) parts.push(minutes + 'm');
+            if (secs > 0 || parts.length === 0) parts.push(secs + 's');
+            
+            return parts.join(' ');
+        }
+        
+        // Load logs
+        function loadLogs() {
+            const password = document.getElementById('admin-password').value;
+            
+            fetch('/api/admin/logs', {
+                headers: {
+                    'Authorization': 'Bearer ' + password
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load logs');
+                }
+                return response.text();
+            })
+            .then(logs => {
+                allLogs = parseLogs(logs);
+                filteredLogs = [...allLogs];
+                currentPage = 1;
+                filterLogs();
+                updateStats();
+            })
+            .catch(error => {
+                console.error('Error loading logs:', error);
+                document.getElementById('logs-content').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Failed to load logs: ' + error.message + '</td></tr>';
+            });
+        }
+        
+        function parseLogs(logText) {
+            if (!logText.trim()) return [];
+            
+            const lines = logText.split('\n');
+            const logs = [];
+            
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                
+                try {
+                    // Try to parse as JSON
+                    const logEntry = JSON.parse(line);
+                    logs.push(logEntry);
+                } catch (e) {
+                    // If not JSON, create a basic log entry
+                    const parts = line.split('\t');
+                    if (parts.length >= 3) {
+                        logs.push({
+                            timestamp: parts[0],
+                            type: parts[1],
+                            details: parts.slice(2).join('\t')
+                        });
+                    } else {
+                        logs.push({
+                            timestamp: new Date().toISOString(),
+                            type: 'unknown',
+                            details: line
+                        });
+                    }
+                }
+            }
+            
+            return logs;
+        }
+        
+        // Filter and search functionality
+        function filterLogs() {
+            const dateFilter = document.getElementById('log-date-filter').value;
+            const typeFilter = document.getElementById('log-type-filter').value;
+            const searchText = document.getElementById('log-search').value.toLowerCase();
+            entriesPerPage = parseInt(document.getElementById('entries-per-page').value) || 100;
+            
+            // Reset to first page when filters change
+            currentPage = 1;
+            
+            // Apply filters
+            filteredLogs = allLogs.filter(log => {
+                // Date filter
+                if (dateFilter) {
+                    const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+                    if (logDate !== dateFilter) return false;
+                }
+                
+                // Type filter
+                if (typeFilter !== 'all') {
+                    if (log.type !== typeFilter) return false;
+                }
+                
+                // Search filter
+                if (searchText) {
+                    const searchableText = JSON.stringify(log).toLowerCase();
+                    if (!searchableText.includes(searchText)) return false;
+                }
+                
+                return true;
+            });
+            
+            // Update display
+            updateStats();
+            renderLogs();
+            renderPagination();
+        }
+        
+        function updateStats() {
+            const totalEntries = filteredLogs.length;
+            const chatRequests = filteredLogs.filter(log => log.type === 'chat').length;
+            const planRequests = filteredLogs.filter(log => log.type === 'plan').length;
+            
+            // Count unique IPs
+            const uniqueIPs = new Set(filteredLogs.map(log => log.ip).filter(ip => ip));
+            const uniqueVisitors = uniqueIPs.size;
+            
+            document.getElementById('total-entries').textContent = totalEntries;
+            document.getElementById('chat-requests').textContent = chatRequests;
+            document.getElementById('plan-requests').textContent = planRequests;
+            document.getElementById('unique-visitors').textContent = uniqueVisitors;
+        }
+        
+        function renderLogs() {
+            const start = (currentPage - 1) * entriesPerPage;
+            const end = start + entriesPerPage;
+            const pageLogs = filteredLogs.slice(start, end);
+            
+            const logsContent = document.getElementById('logs-content');
+            
+            if (pageLogs.length === 0) {
+                logsContent.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No logs found matching your criteria</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            for (const log of pageLogs) {
+                const timestamp = new Date(log.timestamp).toLocaleString();
+                const type = log.type || 'unknown';
+                const ip = log.ip || 'N/A';
+                const userAgent = log.userAgent || 'N/A';
+                const details = log.details || JSON.stringify(log);
+                
+                html += `
+                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="p-3 text-sm text-gray-700">${timestamp}</td>
+                        <td class="p-3 text-sm ${type === 'chat' ? 'text-blue-600' : type === 'plan' ? 'text-purple-600' : 'text-gray-600'}">
+                            <span class="px-2 py-1 rounded-full bg-${type === 'chat' ? 'blue-100' : type === 'plan' ? 'purple-100' : 'gray-100'} text-xs">
+                                ${type}
+                            </span>
+                        </td>
+                        <td class="p-3 text-sm text-gray-600 font-mono">${ip}</td>
+                        <td class="p-3 text-sm text-gray-600 truncate max-w-xs">${userAgent}</td>
+                        <td class="p-3 text-sm text-gray-800">${details}</td>
+                    </tr>
+                `;
+            }
+            
+            logsContent.innerHTML = html;
+        }
+        
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredLogs.length / entriesPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            // Previous button
+            if (currentPage > 1) {
+                html += `<button onclick="goToPage(${currentPage - 1})" class="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">← Previous</button>`;
+            }
+            
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === currentPage) {
+                    html += `<button class="px-4 py-2 bg-purple-600 text-white rounded-lg border border-purple-600">${i}</button>`;
+                } else {
+                    html += `<button onclick="goToPage(${i})" class="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">${i}</button>`;
+                }
+            }
+            
+            // Next button
+            if (currentPage < totalPages) {
+                html += `<button onclick="goToPage(${currentPage + 1})" class="px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">Next →</button>`;
+            }
+            
+            pagination.innerHTML = html;
+        }
+        
+        function goToPage(page) {
+            currentPage = page;
+            renderLogs();
+            renderPagination();
+        }
+        
+        function refreshLogs() {
+            loadLogs();
+        }
+        
+        function clearLogs() {
+            if (!confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
+                return;
+            }
+            
+            const password = document.getElementById('admin-password').value;
+            
+            fetch('/api/admin/clear-logs', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + password,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Logs cleared successfully');
+                    loadLogs();
+                } else {
+                    alert('Failed to clear logs');
+                }
+            })
+            .catch(error => {
+                alert('Error clearing logs: ' + error.message);
+            });
+        }
+        
+        function downloadLogs() {
+            const password = document.getElementById('admin-password').value;
+            
+            fetch('/api/admin/logs', {
+                headers: {
+                    'Authorization': 'Bearer ' + password
+                }
+            })
+            .then(response => response.text())
+            .then(logs => {
+                const blob = new Blob([logs], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'hustleclub-logs-' + new Date().toISOString().split('T')[0] + '.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                alert('Failed to download logs: ' + error.message);
+            });
+        }
+        
+        // Stress test functions
+        function runStressTest() {
+            if (stressTestRunning) {
+                alert('Stress test is already running');
+                return;
+            }
+            
+            const password = document.getElementById('admin-password').value;
+            const apiEndpoint = document.getElementById('api-endpoint').value;
+            const userCount = parseInt(document.getElementById('user-count').value);
+            const queriesPerUser = parseInt(document.getElementById('queries-per-user').value);
+            const delay = parseFloat(document.getElementById('query-delay').value);
+            
+            if (!apiEndpoint || isNaN(userCount) || isNaN(queriesPerUser) || isNaN(delay)) {
+                alert('Please fill in all fields with valid values');
+                return;
+            }
+            
+            stressTestRunning = true;
+            document.getElementById('test-results').classList.remove('hidden');
+            
+            // Reset results
+            document.getElementById('test-duration').textContent = '0s';
+            document.getElementById('total-requests').textContent = '0';
+            document.getElementById('successful-requests').textContent = '0';
+            document.getElementById('failed-requests').textContent = '0';
+            document.getElementById('input-tokens').textContent = '0';
+            document.getElementById('output-tokens').textContent = '0';
+            document.getElementById('total-tokens').textContent = '0';
+            document.getElementById('estimated-cost').textContent = '$0.00';
+            document.getElementById('cost-per-request').textContent = '$0.00';
+            document.getElementById('cost-per-user').textContent = '$0.00';
+            document.getElementById('avg-response-time').textContent = '0s';
+            document.getElementById('requests-per-second').textContent = '0.00';
+            document.getElementById('test-progress').style.width = '0%';
+            document.getElementById('test-progress').textContent = '0%';
+            document.getElementById('test-output').textContent = '';
+            
+            fetch('/api/admin/stress-test', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + password,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    apiEndpoint: apiEndpoint,
+                    userCount: userCount,
+                    queriesPerUser: queriesPerUser,
+                    delay: delay
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                stressTestRunning = false;
+                if (data.success) {
+                    // Parse and display results
+                    displayStressTestResults(data);
+                } else {
+                    document.getElementById('test-output').textContent = 'Error: ' + (data.error || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                stressTestRunning = false;
+                document.getElementById('test-output').textContent = 'Error: ' + error.message;
+            });
+        }
+        
+        function stopStressTest() {
+            if (!stressTestRunning) {
+                alert('No stress test is currently running');
+                return;
+            }
+            
+            // For now, just update UI
+            stressTestRunning = false;
+            document.getElementById('test-output').textContent += '\n\nTest stopped by user';
+        }
+        
+        function displayStressTestResults(data) {
+            // This would parse the stress test output and display it properly
+            // For now, just display the raw output
+            document.getElementById('test-output').textContent = data.output || 'Test completed';
+            
+            // If we have structured results, update the metrics
+            if (data.results) {
+                const results = data.results;
+                document.getElementById('test-duration').textContent = (results.duration || 0) + 's';
+                document.getElementById('total-requests').textContent = results.totalRequests || 0;
+                document.getElementById('successful-requests').textContent = results.successfulRequests || 0;
+                document.getElementById('failed-requests').textContent = results.failedRequests || 0;
+                document.getElementById('input-tokens').textContent = results.inputTokens || 0;
+                document.getElementById('output-tokens').textContent = results.outputTokens || 0;
+                document.getElementById('total-tokens').textContent = results.totalTokens || 0;
+                document.getElementById('estimated-cost').textContent = '$' + (results.estimatedCost || 0).toFixed(2);
+                document.getElementById('cost-per-request').textContent = '$' + (results.costPerRequest || 0).toFixed(4);
+                document.getElementById('cost-per-user').textContent = '$' + (results.costPerUser || 0).toFixed(4);
+                document.getElementById('avg-response-time').textContent = (results.avgResponseTime || 0) + 's';
+                document.getElementById('requests-per-second').textContent = (results.requestsPerSecond || 0).toFixed(2);
+            }
+        }
+        
+        // Settings functions
+        function changePassword() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const password = document.getElementById('admin-password').value;
+            
+            if (!currentPassword || !newPassword) {
+                showPasswordMessage('Please enter both current and new password', 'error');
+                return;
+            }
+            
+            fetch('/api/admin/change-password', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + password,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    currentPassword: currentPassword,
+                    newPassword: newPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showPasswordMessage(data.message || 'Password changed successfully', 'success');
+                    document.getElementById('current-password').value = '';
+                    document.getElementById('new-password').value = '';
+                } else {
+                    showPasswordMessage(data.error || 'Failed to change password', 'error');
+                }
+            })
+            .catch(error => {
+                showPasswordMessage('Error: ' + error.message, 'error');
+            });
+        }
+        
+        function showPasswordMessage(message, type) {
+            const messageElement = document.getElementById('password-change-message');
+            messageElement.textContent = message;
+            messageElement.className = 'mb-4 p-3 rounded-lg ' + 
+                (type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700');
+            messageElement.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

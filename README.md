@@ -3,7 +3,7 @@
 ## Overview
 Production domain: **https://hustleclub.app**
 
-A single-page landing site for 14–18 year olds who want to start a small first business. The page IS the product: a Google-simple hero with one input that opens an on-page AI coaching chat ("Scout", driven by a detailed mentoring system prompt), a saved/resumable conversation, and a generated printable "Hustler Business Plan" once the teen has run a real-world trial week.
+A single-page landing site for 14–18 year olds who want to start a small first business. The page IS the product: a Google-simple hero with one input that opens an on-page AI coaching chat ("Scout", driven by a detailed mentoring system prompt), a saved/resumable conversation, and a generated printable "Hustler Business Plan" once the teen has tested their idea with real customers.
 
 **Scout is provider-agnostic.** Mistral is the default; OpenAI, Groq, OpenRouter, Anthropic, a local Ollama, or any OpenAI-compatible endpoint work by changing one line in `.env` — no code edits. See **[CREDENTIALS.md](CREDENTIALS.md)**.
 
@@ -113,7 +113,7 @@ One page, one view, with three exclusive states in the hero area.
 - Input row (free-text questions only): pill input + pink "SEND" (Bungee 14px). 50% opacity + pointer-events none while busy.
 
 ### 4. Three-step strip
-Auto-fit grid (min 220px), white cards, 3px border, radius 16, 5px 5px 0 shadow. Big Bungee numeral (26px, pink/teal/purple) + Space Grotesk 700 15px label: "Chat it out with Scout" / "Run your trial week for real" / "Come back, grab your PDF plan".
+Auto-fit grid (min 220px), white cards, 3px border, radius 16, 5px 5px 0 shadow. Big Bungee numeral (26px, pink/teal/purple) + Space Grotesk 700 15px label: "Chat it out with Scout" / "Go test your idea - sell to 10 people this week!" / "Come back, grab your PDF plan".
 
 ### 5. "Real kids. Real hustles." (photos)
 H2 Bungee clamp(26–38px); sub 16px. Three polaroid cards (white, 3px border, 6px 6px 0 shadow, padding 12px, rotated -3° / 2° / -1.5°), each holding a 240×240 photo slot and a monospace 13px caption: "the mowing crew", "the ice-cream stall", "car detailing shine".

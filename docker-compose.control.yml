@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  control:
+    build:
+      context: .
+      dockerfile: Dockerfile.control
+    container_name: hustleclub-control
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    # ADMIN_PASSWORD lives in .env (git-ignored), same as every other
+    # secret in this project — never hardcode it here. The server
+    # refuses to start without it; see control-server.js.
+    env_file:
+      - .env
+    environment:
+      - ADMIN_PORT=3002
+    volumes:
+      - ./logs:/app/logs:ro
+      - ./stress_test_no_limits.py:/app/stress_test_no_limits.py:ro
+      - ./control.html:/app/control.html:ro
+      - ./control-server.js:/app/control-server.js:ro
+    networks:
+      - traefik-proxy
+    labels:
+      - traefik.enable=true
+      # Deliberately not "admin" anywhere here — the router/service names
+      # and the hostname are what an operator sees in the Traefik
+      # dashboard and what a scanner tries first, respectively.
+      - traefik.http.routers.hustleclub-control.rule=Host(`control.hustleclub.app`)
+      - traefik.http.routers.hustleclub-control.entrypoints=websecure
+      - traefik.http.routers.hustleclub-control.tls.certresolver=letsencrypt
+      - traefik.http.services.hustleclub-control.loadbalancer.server.port=3002
+
+networks:
+  traefik-proxy:
+    external: true

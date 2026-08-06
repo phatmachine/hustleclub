@@ -196,9 +196,9 @@ const PROVIDERS = {
     label: 'Mistral AI',
     envPrefix: 'MISTRAL',
     baseUrl: 'https://api.mistral.ai/v1',
-    defaultModel: 'mistral-medium-latest',
+    defaultModel: 'mistral-small-latest',
     keysUrl: 'https://console.mistral.ai/api-keys',
-    notes: 'Hustle Club\'s default. Also try mistral-large-latest (sharper) or mistral-small-latest (cheaper).',
+    notes: 'Hustle Club\'s default. Also try mistral-large-latest (sharper) or mistral-medium-latest.',
   }),
 
   openai: openAICompatible({

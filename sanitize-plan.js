@@ -24,9 +24,16 @@
 // rewritten from scratch as a bare <tag>. There is nowhere left to
 // hang an event handler or a javascript: URL.
 //
+// ⚠️ THE PLAN IS STYLED BY STRUCTURE, NOT BY CLASSES.
+// The branded print layout (buildPlanDoc() in index.html) reads this
+// bare, attribute-free markup and rebuilds it into cards, tables and
+// callouts, adding every class itself. That is deliberate: the model
+// never supplies a class, so the "no attributes" rule above stays
+// absolute and the design can never be broken by model output.
+//
 // If you ever need a new tag in the plan, add it to ALLOWED_TAGS below
-// and update PLAN_SYS to match. Do NOT add attribute support without
-// thinking hard about URL schemes.
+// and update BOTH the PLAN_SYS skeleton and buildPlanDoc() to match.
+// Do NOT add attribute support without thinking hard about URL schemes.
 //
 // Isomorphic on purpose: pure string work, no DOM and no Node APIs, so
 // server.js and index.html run the identical code (defence in depth —
@@ -34,8 +41,14 @@
 // rendering).
 // ============================================================
 
-/** The only tags the plan is allowed to contain. */
-export const ALLOWED_TAGS = ['h2', 'h3', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'br'];
+/** The only tags the plan is allowed to contain.
+ *  h1 is the venture headline; the table tags carry the startup budget.
+ *  All of them are inert without attributes — a bare <td> cannot run
+ *  anything — so this stays a pure-structure allow-list. */
+export const ALLOWED_TAGS = [
+  'h1', 'h2', 'h3', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'br',
+  'table', 'thead', 'tbody', 'tr', 'th', 'td',
+];
 
 const ALLOWED = new Set(ALLOWED_TAGS);
 // Matches one tag-ish token: <foo ...>, </foo>, <!-- ... -->, <?...>

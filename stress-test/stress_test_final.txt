@@ -1,0 +1,38 @@
+HUSTLECLUB APP STRESS TEST REPORT (No Client-Side Limits)
+Generated: 2026-08-01T09:10:01.305824
+API URL: http://localhost:3001/api/chat
+Concurrent Users: 10
+Queries per User: 5
+Delay: 2.0s
+Total Requests: 50
+
+RESULTS:
+Duration: 21.08 seconds
+Successful: 12
+Failed: 38
+Success Rate: 24.0%
+
+TOKEN USAGE:
+Input Tokens: 17,210
+Output Tokens: 676
+Total Tokens: 17,886
+Average Tokens per Request: 1490.5
+
+COST ANALYSIS:
+Total Estimated Cost: $0.004471
+Cost per User: $0.000447
+Cost per Request: $0.00037262
+
+PER-USER DETAILS:
+User   Queries  Input      Output     Errors   Total     
+------ -------- ---------- ---------- -------- ----------
+1      2        2,864      81         3        2,945     
+2      1        1,435      88         4        1,523     
+3      2        2,869      103        3        2,972     
+4      1        1,434      79         4        1,513     
+5      1        1,434      62         4        1,496     
+6      1        1,436      67         4        1,503     
+7      1        1,432      60         4        1,492     
+8      1        1,435      58         4        1,493     
+9      1        1,435      49         4        1,484     
+10     1        1,436      29         4        1,465     

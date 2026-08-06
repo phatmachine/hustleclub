@@ -1,0 +1,33 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin*
+
+# Popular LLM / AI-answer-engine crawlers — explicitly allowed so the
+# chat, trial kit and FAQ can be cited by name rather than skipped
+# because a crawler defaulted to caution with no robots.txt present.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://hustleclub.app/sitemap.xml

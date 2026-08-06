@@ -1,16 +1,10 @@
-version: '3.8'
-
 services:
   hustleclub:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: hustleclub
+    build: .
     restart: unless-stopped
     env_file:
       - .env
-    ports:
-      - "3001:3000"
+    # app listens on 3000 inside the container
     expose:
       - "3000"
     volumes:
@@ -24,8 +18,7 @@ services:
       - traefik.enable=true
       - traefik.http.routers.hustleclub.rule=Host(`hustleclub.app`) || Host(`www.hustleclub.app`)
       - traefik.http.routers.hustleclub.entrypoints=websecure
-      - traefik.http.routers.hustleclub.tls.certresolver=letsencrypt
-      - traefik.http.routers.hustleclub.service=hustleclub
+      - traefik.http.routers.hustleclub.tls=true
       - traefik.http.services.hustleclub.loadbalancer.server.port=3000
 
 networks:

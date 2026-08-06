@@ -6,6 +6,21 @@
 <title>Hustle Club — turn your idea into cold hard cash</title>
 <meta name="description" content="Chat with Scout, your AI business mentor. Hunt an idea, test it for real, then print your one-page Hustler Business Plan. Free, no sign-up, for 14–18 year olds.">
 <meta name="theme-color" content="#FFF7EE">
+<link rel="canonical" href="https://hustleclub.app/">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+<!-- Open Graph / Twitter — also what link-preview bots for ChatGPT,
+     Perplexity, etc. read when a user pastes this URL into a chat. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hustle Club">
+<meta property="og:title" content="Hustle Club — turn your idea into cold hard cash">
+<meta property="og:description" content="Chat with Scout, your AI business mentor. Hunt an idea, test it for real, then print your one-page Hustler Business Plan. Free, no sign-up, for 14–18 year olds.">
+<meta property="og:url" content="https://hustleclub.app/">
+<meta property="og:image" content="https://hustleclub.app/assets/crew-retro-games.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hustle Club — turn your idea into cold hard cash">
+<meta name="twitter:description" content="Chat with Scout, your AI business mentor. Hunt an idea, test it for real, then print your one-page Hustler Business Plan. Free, no sign-up, for 14–18 year olds.">
+<meta name="twitter:image" content="https://hustleclub.app/assets/crew-retro-games.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bungee&amp;family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet">
@@ -45,13 +60,23 @@ button{font-family:'Space Grotesk',sans-serif}
 .opt:hover{background:var(--t);color:#fff;transform:translate(-1px,-1px)}
 .opt-dot{width:18px;height:18px;flex:none;border:3px solid var(--ink);border-radius:50%;background:#fff;display:grid;place-items:center}
 .opt-dot i{width:8px;height:8px;border-radius:50%;background:var(--p)}
+.chip-free{align-self:flex-start;background:none;border:none;padding:4px 2px;font-size:13px;font-weight:700;color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;cursor:pointer}
+.chip-free:hover{color:var(--v)}
+#plan-title{font-family:'Bungee',sans-serif;font-size:17px}
 .plan-btn{border:3px solid var(--ink);border-radius:10px;padding:7px 14px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
 .plan-btn:hover{transform:translate(-1px,-1px)}
 .plan-btn.is-print{background:var(--p);color:#fff}
 .plan-btn.is-email{background:var(--v);color:#fff}
 .plan-btn.is-close{background:#fff;color:var(--ink)}
 
-/* ── Chat ─────────────────────────────────────────────────────────── */
+/* ── Chat ──────────────────────────────────────────────────────────
+   The transcript height used to be a hard-coded inline 440px. On a
+   phone that pushed the options and the text box below the fold, and
+   because the transcript scrolls INSIDE this box, no reply ever brought
+   them back — the app read as "none of the buttons work". Height is
+   viewport-relative now, and the mobile block further down reclaims the
+   hero copy once the chat is running. See keepControlsInView(). */
+#chat-scroll{height:clamp(220px,44vh,440px)}
 .row{display:flex}
 .row.is-user{justify-content:flex-end}
 .row.is-bot{justify-content:flex-start}
@@ -82,13 +107,268 @@ button{font-family:'Space Grotesk',sans-serif}
 .faq[open] .faq-mark::after{content:'−'}
 .faq-a{padding:0 20px 18px;font-size:15px;line-height:1.55}
 
-/* ── Printable plan ───────────────────────────────────────────────── */
-#plan-print h2{font-family:'Bungee',sans-serif;font-size:22px;margin:26px 0 8px;color:var(--ink)}
-#plan-print h3{font-size:16px;margin:18px 0 6px}
-#plan-print p,#plan-print li{font-size:14px;line-height:1.55;margin:6px 0}
-#plan-print ul{padding-left:20px;margin:6px 0}
-@media print{body{visibility:hidden}#plan-print,#plan-print *{visibility:visible}#plan-print{position:absolute;left:0;top:0;width:100%;padding:0!important;max-height:none!important;overflow:visible!important}}
+/* ── Mission card ────────────────────────────────────────────────────
+   The trial brief is the one message that means "the chat is finished,
+   now go outside". It used to arrive as another bot bubble at the end
+   of a long scroll, so it read as more chat — you had to finish
+   reading it to work out the survey was over. It is now a full-width
+   card that deliberately breaks the rhythm of the conversation: dark
+   banner, four labelled rows, and the recall code on a bright panel.
+   Four lines is the whole budget; see TRIAL_SYS in prompts.js. */
+.ms{border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--ink);background:var(--y);overflow:visible;margin:2px 0 4px}
+.ms-flag{background:var(--ink);color:#fff;font-family:'Bungee',sans-serif;font-size:13px;letter-spacing:1.4px;padding:10px 16px;display:flex;align-items:center;gap:9px}
+.ms-flag i{width:16px;height:16px;flex:none;border-radius:50%;background:var(--y);display:grid;place-items:center;font-size:10px;font-style:normal;color:var(--ink)}
+.ms-body{padding:14px;display:flex;flex-direction:column;gap:8px}
+.ms-row{background:#fff;border:3px solid var(--ink);border-radius:12px;padding:9px 12px}
+.ms-key{font-family:'Bungee',sans-serif;font-size:9.5px;letter-spacing:1.2px;color:var(--p);margin-bottom:3px}
+.ms-val{font-size:14px;line-height:1.4;font-weight:500}
+.ms-row.is-say{background:var(--t)}
+.ms-row.is-say .ms-key{color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.ms-row.is-say .ms-val{color:#fff;font-weight:700}
+
+/* The recall panel — code display with download button */
+.qr-panel{background:var(--p);border:3px solid var(--ink);border-radius:20px;box-shadow:6px 6px 0 var(--ink);
+  padding:24px 18px 20px;transform:rotate(-1.4deg);display:flex;flex-direction:column;align-items:center;gap:16px;margin:16px 5px 6px}
+.code-display{background:#fff;border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);padding:16px;text-align:center}
+.code-label{font-family:'Bungee',sans-serif;font-size:11px;letter-spacing:1.2px;color:var(--p);margin-bottom:6px}
+.code-value{font-family:'Bungee',sans-serif;font-size:18px;letter-spacing:1px;color:var(--ink);word-break:break-word;line-height:1.3}
+.code-download{background:var(--y);border:3px solid var(--ink);border-radius:999px;padding:14px 28px;font-weight:700;font-size:16px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);color:var(--ink);font-family:'Space Grotesk',sans-serif;text-decoration:none;display:inline-block;margin-top:8px;font-weight:bold}
+.code-download:hover{background:var(--p);color:#fff;transform:translate(-1px,-1px)}
+.qr-note{font-size:15px;line-height:1.45;text-align:center;color:#fff;max-width:450px;margin:0;font-weight:bold}
+
+/* ── Code entry ──────────────────────────────────────────────────── */
+.btn-code{background:var(--y);border:3px solid var(--ink);border-radius:999px;padding:9px 18px;font-weight:700;font-size:14px;
+  cursor:pointer;box-shadow:3px 3px 0 var(--ink);color:var(--ink);font-family:'Space Grotesk',sans-serif}
+.btn-code:hover{background:var(--p);color:#fff;transform:translate(-1px,-1px)}
+#code-input{flex:1;border:3px solid var(--ink);border-radius:999px;padding:12px 18px;font-size:16px;
+  font-family:'Space Grotesk',sans-serif;outline:none;min-width:0}
+#code-error{color:var(--p);font-weight:700;font-size:13px;margin:0}
+
+/* ── Phones ──────────────────────────────────────────────────────────
+   Reclaims the vertical space that pushed the answer controls off the
+   bottom of the screen. Nothing here is decorative: on a 375x844 handset
+   the options sat ~250px below the fold before it. */
+@media (max-width:720px),(max-height:660px){
+  .is-chatting #hero-copy{display:none}
+  .is-chatting #hero-section{padding-top:14px}
+  .is-chatting header{padding-top:12px;padding-bottom:12px}
+  #chat-scroll{height:clamp(200px,38vh,340px);padding:16px}
+  #chat-card{box-shadow:5px 5px 0 var(--ink)}
+  .opt{padding:11px 14px;font-size:14px}
+  /* The floating shapes are hero decoration; once the chat is running
+     they just collide with the card on a narrow screen. */
+  .is-chatting #doodles{display:none}
+  /* A three-line title and stacked buttons were taking a third of the
+     screen before the plan itself got a look in. */
+  #plan-modal{padding:10px}
+  #plan-head{padding:10px 12px}
+  #plan-title{font-size:12px}
+  .plan-btn{padding:6px 10px;font-size:12px}
+  #plan-print{padding:10px}
+}
+/* Short screens — a small handset, or any phone turned sideways. The
+   transcript gives up height first; the answer controls never do. */
+@media (max-height:700px){
+  #chat-scroll{height:clamp(130px,24vh,220px)}
+  #chip-panel{padding-top:10px}
+  .opt{padding:9px 13px;font-size:13.5px}
+}
+
+/* ── Printable plan ──────────────────────────────────────────────────
+   The model returns a flat run of h1/h2/h3/p/ul/table with NO
+   attributes — sanitize-plan.js strips every one of them, deliberately,
+   so a prompt-injected reply has nowhere to hang a handler. Every class
+   below is therefore added in the browser by buildPlanDoc(), which
+   reads that flat markup and rebuilds it as this document.
+
+   Three files move together: the skeleton in prompts.js, the builder in
+   this file, and the styles here. Change one, check the other two. */
+/* Padding lives here, not inline, so the phone rules can shrink it. */
+#plan-modal{padding:20px}
+#plan-print{background:#EFE7DB;padding:16px}
+.pl-doc{background:#fff;color:var(--ink);font-family:'Space Grotesk',sans-serif;line-height:1.5;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+/* Compliance strip. Printed at the top of the sheet and again at the
+   foot, so a plan that spills onto a second page still carries it. */
+.pl-strip{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  background:var(--bg);border-bottom:2px solid var(--ink);padding:7px 16px}
+.pl-strip.is-foot{border-bottom:0;border-top:2px solid var(--ink)}
+.pl-strip-l{display:flex;align-items:center;gap:7px;font-family:'Bungee',sans-serif;font-size:10px;letter-spacing:.3px;text-transform:uppercase}
+.pl-strip-r{font-size:10px;font-weight:500;opacity:.75;white-space:nowrap}
+.pl-star{width:16px;height:16px;flex:none;border:2px solid var(--ink);border-radius:50%;background:var(--y);
+  display:grid;place-items:center;font-size:9px;line-height:1}
+
+.pl-page{padding:22px 24px 26px}
+.pl-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.pl-brand{display:flex;align-items:center;gap:8px;font-family:'Bungee',sans-serif;font-size:16px;letter-spacing:.5px}
+.pl-brand .pl-star{width:23px;height:23px;font-size:13px}
+.pl-tag{background:var(--v);color:#fff;border:2px solid var(--ink);border-radius:999px;padding:4px 12px;font-size:10px;font-weight:700;white-space:nowrap}
+.pl-title{font-family:'Bungee',sans-serif;font-size:27px;line-height:1.06;margin:0 0 11px;text-transform:uppercase}
+.pl-chips{display:flex;flex-wrap:wrap;gap:7px;list-style:none;margin:0 0 16px;padding:0}
+.pl-chips li{border:2px solid var(--ink);border-radius:999px;padding:3px 11px;font-size:10.5px;font-weight:700;background:#fff}
+.pl-chips li:nth-child(3){background:var(--t);color:#fff}
+.pl-chips li:nth-child(4){background:var(--p);color:#fff}
+
+/* The one-liner: the single loudest thing on the page. */
+.pl-band{background:var(--y);border:3px solid var(--ink);border-radius:12px;box-shadow:4px 4px 0 var(--ink);
+  padding:12px 16px;margin:0 0 17px;transform:rotate(-.5deg)}
+.pl-band h4{font-family:'Bungee',sans-serif;font-size:11px;margin:0 0 4px;letter-spacing:.4px;text-transform:uppercase}
+.pl-band p{margin:0;font-size:12.5px;line-height:1.45}
+
+.pl-card{border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);background:#fff;
+  padding:12px 16px 14px;margin:0 0 14px;break-inside:avoid;page-break-inside:avoid}
+.pl-head{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.pl-num{width:21px;height:21px;flex:none;border:2px solid var(--ink);border-radius:50%;display:grid;place-items:center;
+  font-family:'Bungee',sans-serif;font-size:10px;color:#fff}
+.pl-head h2{font-family:'Bungee',sans-serif;font-size:15px;margin:0;letter-spacing:.4px;text-transform:uppercase}
+.pl-card p{margin:5px 0;font-size:12px}
+.pl-card>ul,.pl-card>ol{margin:5px 0;padding-left:17px;font-size:12px}
+.pl-card li{margin:2px 0}
+
+/* Two or more <h3> groups sit side by side (section 2); a lone one
+   spans the card (the quality checklist in section 4). */
+.pl-subs{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:9px;margin-top:8px}
+.pl-sub{border:2px solid var(--ink);border-radius:9px;background:#FFFCF6;padding:9px 11px}
+.pl-sub h3,.pl-block>h3{font-family:'Bungee',sans-serif;font-size:9.5px;margin:0 0 5px;letter-spacing:.5px;text-transform:uppercase}
+.pl-sub p{margin:0;font-size:11px;line-height:1.42}
+.pl-block{margin-top:10px}
+
+/* Money plan: budget table beside the funding/price/target boxes. */
+.pl-money{display:grid;grid-template-columns:1.35fr 1fr;gap:11px;align-items:start}
+.pl-table{width:100%;border-collapse:collapse;border:2px solid var(--ink);border-radius:8px;overflow:hidden;font-size:11px}
+.pl-table th{background:var(--ink);color:#fff;font-family:'Bungee',sans-serif;font-size:9px;letter-spacing:.5px;
+  text-transform:uppercase;text-align:left;padding:6px 9px}
+.pl-table td{padding:5px 9px;border-top:1px solid rgba(38,36,59,.16)}
+.pl-table th:last-child,.pl-table td:last-child{text-align:right}
+.pl-table tr.is-total td{background:var(--p);color:#fff;font-family:'Bungee',sans-serif;font-size:9.5px;
+  letter-spacing:.4px;text-transform:uppercase;border-top:2px solid var(--ink)}
+.pl-facts{display:flex;flex-direction:column;gap:7px}
+.pl-fact{border:2px solid var(--ink);border-radius:9px;background:#FFFCF6;padding:7px 10px;font-size:11px;line-height:1.4;margin:0}
+.pl-fact.is-key{background:var(--t);color:#fff}
+
+/* Quality checklist: real tick boxes to fill in by hand. */
+.pl-check{list-style:none;padding:0;margin:4px 0 0}
+.pl-check li{display:flex;align-items:flex-start;gap:8px;font-size:11.5px;margin:0 0 5px}
+.pl-check li::before{content:"";width:12px;height:12px;flex:none;margin-top:2px;border:2px solid var(--ink);border-radius:3px;background:#fff}
+
+/* First two weeks: one row per day, label in a pill. */
+.pl-days{list-style:none;padding:0;margin:6px 0 0}
+.pl-days li{display:flex;align-items:flex-start;gap:9px;border:2px solid var(--ink);border-radius:8px;background:#FFFCF6;
+  padding:6px 9px;margin:0 0 5px;font-size:11.5px;line-height:1.4}
+.pl-days li:last-child{background:var(--y)}
+.pl-day{flex:none;min-width:54px;background:var(--ink);color:#fff;border-radius:5px;padding:3px 7px;
+  font-family:'Bungee',sans-serif;font-size:8.5px;letter-spacing:.4px;text-transform:uppercase;text-align:center}
+.pl-days li:last-child .pl-day{background:var(--p)}
+
+.pl-scout{display:flex;gap:11px;align-items:flex-start;border:3px solid var(--ink);border-radius:14px;
+  box-shadow:4px 4px 0 var(--ink);background:#fff;padding:12px 16px;margin:0 0 14px;break-inside:avoid;page-break-inside:avoid}
+.pl-scout .pl-star{width:29px;height:29px;font-size:16px;background:var(--t);color:#fff;border-width:3px}
+.pl-scout h4{font-family:'Bungee',sans-serif;font-size:11px;margin:0 0 4px;letter-spacing:.4px;text-transform:uppercase}
+.pl-scout p{margin:0;font-size:12px}
+
+.pl-fine{border:3px solid var(--ink);border-radius:14px;background:var(--bg);padding:12px 16px;margin:0;
+  break-inside:avoid;page-break-inside:avoid}
+.pl-fine h4{font-family:'Bungee',sans-serif;font-size:10px;margin:0 0 5px;letter-spacing:.4px;text-transform:uppercase}
+.pl-fine p{margin:0 0 4px;font-size:10px;line-height:1.5}
+.pl-foot{display:flex;justify-content:space-between;gap:12px;padding:7px 16px;font-size:9px;opacity:.7}
+
+/* ── Print ───────────────────────────────────────────────────────────
+   Everything except the plan sheet is removed from the flow (not merely
+   made invisible — the old visibility trick left the whole landing page
+   occupying space and printed blank pages after the plan). */
+@media print{
+  /* Vertical margin only, so the compliance strip still runs edge to
+     edge — and so a plan that spills onto a second page starts that
+     page clear of the paper edge rather than jammed against it. */
+  @page{size:A4;margin:9mm 0}
+  html,body{background:#fff}
+  body>*{display:none!important}
+  body>div{display:block!important}
+  body>div>*{display:none!important}
+  #plan-modal{display:block!important;position:static!important;inset:auto!important;background:none!important;padding:0!important}
+  #plan-sheet{display:block!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+    max-width:none!important;width:auto!important;max-height:none!important;overflow:visible!important}
+  #plan-head,#rush-note{display:none!important}
+  #plan-print{overflow:visible!important;max-height:none!important;padding:0!important;background:#fff!important}
+  .pl-page{padding:11mm 12mm 8mm}
+  .pl-card,.pl-scout{box-shadow:3px 3px 0 var(--ink)}
+}
 </style>
+
+<!-- Structured data. The FAQPage entries must stay word-for-word with
+     the visible <details> answers in #faq below — search engines treat
+     a mismatch between schema and on-page text as spam and can pull the
+     rich result. Two files move together: the markup and this block. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://hustleclub.app/#website",
+      "name": "Hustle Club",
+      "url": "https://hustleclub.app/",
+      "description": "Chat with Scout, your AI business mentor. Hunt an idea, test it for real, then print your one-page Hustler Business Plan. Free, no sign-up, for 14–18 year olds.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://hustleclub.app/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Do I need money to start?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nope. Scout helps you find ideas that start near zero: borrow gear, pre-sell, or do a few jobs first and buy equipment from what you earn."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do my parents need to know?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "If you are under 16, yes: a parent or guardian gets a heads-up before anything kicks off. It is still 100% your business, they are just in the loop."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is this actually free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Completely. No account, no card, no trial-that-bills-you. The chat, the trial kit and the printable plan all cost exactly zero."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What if my idea sucks?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Then you find out in one afternoon instead of blowing your savings. Scout kills weak ideas with you, shows why, and hunts for a better one. Failure is data."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I get the PDF business plan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chat with Scout, test your idea with real customers for a week, then come back and report your results. Pitch your idea back, and the \"Get my plan\" button prints your one-page Hustler Business Plan."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens to my answers?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Your chat is saved against your three-word code so you can pick it up on any device — that is the only way to reach it, so keep your code to yourself. There is no account and we never ask for your surname, address, school or phone number. Saved chats are deleted after 90 days."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <div style="min-height:100vh;overflow-x:hidden">
@@ -103,16 +383,21 @@ button{font-family:'Space Grotesk',sans-serif}
     </nav>
   </header>
 
-  <section style="position:relative;max-width:900px;margin:0 auto;padding:40px 24px 30px;text-align:center">
+  <section id="hero-section" style="position:relative;max-width:900px;margin:0 auto;padding:40px 24px 30px;text-align:center">
     <div id="doodles" style="position:absolute;inset:0;pointer-events:none" aria-hidden="true">
       <div style="position:absolute;left:2%;top:8%;width:26px;height:26px;background:var(--t);border:3px solid var(--ink);border-radius:50%;animation:bob 4s ease-in-out infinite"></div>
       <div style="position:absolute;right:4%;top:4%;width:30px;height:30px;background:var(--p);border:3px solid var(--ink);transform:rotate(45deg);animation:bob 5s ease-in-out infinite"></div>
       <div style="position:absolute;left:6%;bottom:12%;font-size:34px;color:var(--v);animation:bob 6s ease-in-out infinite">✶</div>
       <div style="position:absolute;right:7%;bottom:20%;width:44px;height:14px;background:var(--y);border:3px solid var(--ink);border-radius:8px;transform:rotate(-12deg)"></div>
     </div>
-    <div style="display:inline-block;background:var(--v);color:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:999px;padding:6px 18px;font-weight:700;font-size:14px;transform:rotate(-2deg)">for 14–18 year olds with big plans</div>
-    <h1 style="font-family:'Bungee',sans-serif;font-size:clamp(38px,7vw,68px);line-height:1.05;margin:26px 0 14px">Turn your idea into <span style="background:var(--y);padding:0 12px;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);display:inline-block;transform:rotate(-1.5deg)">cold hard cash</span></h1>
-    <p style="font-size:19px;max-width:560px;margin:0 auto 34px;line-height:1.5">Chat with <strong>Scout</strong>, your AI business mentor. Hunt an idea, test it for real, come back and grab your printable business plan. That's it. That's the site.</p>
+    <!-- Marketing copy. On a phone this is ~300px of headline sitting
+         between the visitor and the chat controls, so it is folded away
+         once the conversation starts — see the mobile block in the CSS. -->
+    <div id="hero-copy">
+      <div style="display:inline-block;background:var(--v);color:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:999px;padding:6px 18px;font-weight:700;font-size:14px;transform:rotate(-2deg)">for 14–18 year olds with big plans</div>
+      <h1 style="font-family:'Bungee',sans-serif;font-size:clamp(38px,7vw,68px);line-height:1.05;margin:26px 0 14px">Turn your idea into <span style="background:var(--y);padding:0 12px;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);display:inline-block;transform:rotate(-1.5deg)">cold hard cash</span></h1>
+      <p style="font-size:19px;max-width:560px;margin:0 auto 34px;line-height:1.5">Chat with <strong>Scout</strong>, your AI business mentor. Hunt an idea, test it for real, come back and grab your printable business plan. That's it. That's the site.</p>
+    </div>
 
     <noscript>
       <p style="max-width:560px;margin:0 auto 34px;background:var(--y);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:14px;padding:16px 18px;font-size:15px;line-height:1.5;text-align:left">Scout needs JavaScript switched on to chat with you. The FAQ below works either way.</p>
@@ -130,6 +415,12 @@ button{font-family:'Space Grotesk',sans-serif}
         <button type="button" class="chip" data-starter="Blank page, help me hunt">Blank page, help me hunt</button>
         <button type="button" class="chip" data-starter="I want money fast">I want money fast</button>
       </div>
+      <!-- Shown only to someone who has been here before — a first-time
+           visitor has no code, so offering the box would just be a
+           dead end they have to work out. See init(). -->
+      <div id="code-row" hidden style="margin-top:22px">
+        <button type="button" id="btn-code" class="btn-code">I've got a code ✶</button>
+      </div>
     </div>
 
     <!-- Chat card: shown from the first message onward. -->
@@ -144,10 +435,13 @@ button{font-family:'Space Grotesk',sans-serif}
           <button type="button" id="btn-reset" class="btn-reset">Start over</button>
         </div>
       </div>
-      <div id="chat-scroll" role="log" aria-live="polite" aria-label="Chat with Scout" style="height:440px;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;background:repeating-linear-gradient(0deg,transparent,transparent 26px,#F4EDE2 26px,#F4EDE2 27px)"></div>
-      <div id="chip-panel" hidden style="display:flex;flex-direction:column;gap:8px;padding:14px 18px 6px;border-top:3px solid var(--ink);background:var(--y)">
+      <div id="chat-scroll" role="log" aria-live="polite" aria-label="Chat with Scout" style="overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;background:repeating-linear-gradient(0deg,transparent,transparent 26px,#F4EDE2 26px,#F4EDE2 27px)"></div>
+      <div id="chip-panel" hidden style="display:flex;flex-direction:column;gap:8px;padding:14px 18px 10px;border-top:3px solid var(--ink);background:var(--y)">
         <div style="font-family:'Bungee',sans-serif;font-size:12px;letter-spacing:1px">PICK ONE</div>
         <div id="chip-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <!-- The way out of the options. Always here, so no question can
+             ever be a dead end for an answer that isn't on the list. -->
+        <button type="button" id="chip-free" class="chip-free">or type my own answer</button>
       </div>
       <div id="input-row" style="display:flex;padding:12px 18px 16px;gap:10px;background:#FFFDF8">
         <label for="chat-input" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">Your message</label>
@@ -165,7 +459,7 @@ button{font-family:'Space Grotesk',sans-serif}
       </div>
       <div style="background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 var(--ink);padding:18px;display:flex;gap:14px;align-items:center">
         <div style="font-family:'Bungee',sans-serif;font-size:26px;color:var(--t)">2</div>
-        <div style="font-weight:700;font-size:15px;line-height:1.35">Run your trial week for real</div>
+        <div style="font-weight:700;font-size:15px;line-height:1.35">Go test your idea - sell to 10 people this week!</div>
       </div>
       <div style="background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 var(--ink);padding:18px;display:flex;gap:14px;align-items:center">
         <div style="font-family:'Bungee',sans-serif;font-size:26px;color:var(--v)">3</div>
@@ -203,12 +497,12 @@ button{font-family:'Space Grotesk',sans-serif}
       <div style="background:var(--t);border:3px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 var(--ink);padding:26px;color:#fff;transform:rotate(1deg)">
         <div style="font-family:'Bungee',sans-serif;font-size:30px;margin-bottom:8px;text-shadow:2px 2px 0 var(--ink)">ZIP</div>
         <div style="font-family:'Bungee',sans-serif;font-size:18px;margin-bottom:8px;text-shadow:2px 2px 0 var(--ink)">No sign-up needed</div>
-        <p style="margin:0;font-size:14px;line-height:1.5">No email, no password. This page remembers your chat so you can just come back.</p>
+        <p style="margin:0;font-size:14px;line-height:1.5">No email, no password. You get three words like <strong>sun-dance-flower</strong> — type them in on any device to pick your hustle back up.</p>
       </div>
       <div style="background:var(--p);border:3px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 var(--ink);padding:26px;color:#fff;transform:rotate(-1deg)">
         <div style="font-family:'Bungee',sans-serif;font-size:30px;margin-bottom:8px;text-shadow:2px 2px 0 var(--ink)">PDF</div>
         <div style="font-family:'Bungee',sans-serif;font-size:18px;margin-bottom:8px;text-shadow:2px 2px 0 var(--ink)">Hustler Business Plan</div>
-        <p style="margin:0;font-size:14px;line-height:1.5">Run your trial week, come back with the numbers, and print your one-page plan.</p>
+        <p style="margin:0;font-size:14px;line-height:1.5">Test your idea with real customers, come back with the results, and print your one-page plan.</p>
       </div>
     </div>
   </section>
@@ -234,33 +528,55 @@ button{font-family:'Space Grotesk',sans-serif}
       </details>
       <details class="faq" name="faq">
         <summary><span>How do I get the PDF business plan?</span><span class="faq-mark" aria-hidden="true"></span></summary>
-        <div class="faq-a">Chat with Scout, run your paid trial week, then come back and report your numbers. Pitch your idea back, and the "Get my plan" button prints your one-page Hustler Business Plan.</div>
+        <div class="faq-a">Chat with Scout, test your idea with real customers for a week, then come back and report your results. Pitch your idea back, and the "Get my plan" button prints your one-page Hustler Business Plan.</div>
+      </details>
+      <details class="faq" name="faq">
+        <summary><span>What happens to my answers?</span><span class="faq-mark" aria-hidden="true"></span></summary>
+        <div class="faq-a">Your chat is saved against your three-word code so you can pick it up on any device — that is the only way to reach it, so keep your code to yourself. There is no account and we never ask for your surname, address, school or phone number. Saved chats are deleted after 90 days.</div>
       </details>
     </div>
   </section>
 
   <footer style="max-width:820px;margin:70px auto 0;padding:30px 24px 40px;border-top:3px solid var(--ink);text-align:center">
     <div style="font-family:'Bungee',sans-serif;font-size:18px;margin-bottom:10px">HUSTLE CLUB Conditions ✶</div>
-    <!-- TODO(owner): /terms.html does not exist yet. Publish it before
-         launch, or point this href at wherever the terms actually live.
-         The prototype shipped with href="link-to-terms". -->
     <p style="font-size:12.5px;line-height:1.6;opacity:.75;max-width:600px;margin:0 auto">The Hustle Club is designed to inspire and educate children about entrepreneurship. However, all business activities involve inherent risks, including the potential for physical harm, financial loss, or unintended consequences. Parents or guardians are solely responsible for supervising their children and ensuring their safety and compliance with local laws. By participating, you acknowledge these risks and agree to our full <a href="/terms.html" target="_blank" rel="nofollow noopener noreferrer external">Terms and Conditions</a>. Users under the age of 16 agree to always review and approve their business plans with parents before implementation. <br>Have fun, be safe, learn and grow.&nbsp;</p>
   </footer>
 
-  <div id="plan-modal" hidden style="position:fixed;inset:0;background:rgba(38,36,59,.55);z-index:50;display:grid;place-items:center;padding:20px" role="dialog" aria-modal="true" aria-label="Your Hustler Business Plan">
-    <div style="background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:10px 10px 0 var(--ink);max-width:760px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--y);border-bottom:3px solid var(--ink);padding:14px 20px">
-        <span style="font-family:'Bungee',sans-serif;font-size:17px">YOUR HUSTLER BUSINESS PLAN</span>
+  <div id="code-modal" hidden style="position:fixed;inset:0;background:rgba(38,36,59,.55);z-index:60;display:grid;place-items:center;padding:20px" role="dialog" aria-modal="true" aria-label="Pick up where you left off">
+    <div style="background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:10px 10px 0 var(--ink);max-width:430px;width:100%;overflow:hidden">
+      <div style="background:var(--t);border-bottom:3px solid var(--ink);padding:14px 20px;font-family:'Bungee',sans-serif;font-size:16px;color:#fff;text-shadow:2px 2px 0 var(--ink)">PICK UP WHERE YOU LEFT OFF</div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <p style="margin:0;font-size:14px;line-height:1.5">Enter your code or upload your code file.</p>
+        <div style="display:flex;gap:10px">
+          <label for="code-input" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">Your code</label>
+          <input id="code-input" placeholder="sun-dance-flower" autocomplete="off" autocapitalize="none" spellcheck="false" style="flex:1">
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <label for="code-upload" class="plan-btn is-print" style="cursor:pointer">Upload Code File</label>
+          <input type="file" id="code-upload" accept=".txt" style="display:none">
+        </div>
+        <p id="code-error" hidden></p>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="code-cancel" class="plan-btn is-close">Cancel</button>
+          <button type="button" id="code-go" class="plan-btn is-print">Find my hustle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="plan-modal" hidden style="position:fixed;inset:0;background:rgba(38,36,59,.55);z-index:50;display:grid;place-items:center" role="dialog" aria-modal="true" aria-label="Your Hustler Business Plan">
+    <div id="plan-sheet" style="background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:10px 10px 0 var(--ink);max-width:760px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
+      <div id="plan-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--y);border-bottom:3px solid var(--ink);padding:14px 20px">
+        <span id="plan-title">YOUR HUSTLER BUSINESS PLAN</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" id="plan-print-btn" class="plan-btn is-print">Print / Save PDF</button>
-          <button type="button" id="plan-email-btn" class="plan-btn is-email">Email it</button>
           <button type="button" id="plan-close-btn" class="plan-btn is-close">Close</button>
         </div>
       </div>
-      <div id="plan-print" style="overflow-y:auto;padding:14px 30px 30px;max-height:74vh">
-        <div id="rush-note" hidden style="background:var(--y);border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);padding:16px 18px;margin:16px 0 6px">
+      <div id="plan-print" style="overflow-y:auto;max-height:74vh">
+        <div id="rush-note" hidden style="background:var(--y);border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);padding:16px 18px;margin:0 0 16px">
           <div style="font-family:'Bungee',sans-serif;font-size:14px;margin-bottom:6px">Whoa, speed-runner ⚡</div>
-          <p style="margin:0;font-size:14px;line-height:1.5">Love the energy — your plan's all yours, no gatekeeping. But real talk: the founders who win are the ones who run the trial first. Knock on doors, take real money, collect the nos. A plan built on real numbers beats a plan built on guesses every time — rushing past the research is the #1 way first ventures faceplant. Run your trial week, come back with the numbers, and regenerate this plan. It'll hit way harder.</p>
+          <p style="margin:0;font-size:14px;line-height:1.5">Love the energy — your plan's all yours, no gatekeeping. But here's the real deal: the best founders test their ideas first. Go sell to 10 real customers this week, offer a discount as a trial, collect the yeses AND the nos. A plan built on real experience beats one built on guesses every time. Test your idea, come back with real results, and regenerate this plan — it'll be 10x stronger!</p>
         </div>
         <div id="plan-body"></div>
       </div>
@@ -301,7 +617,7 @@ button{font-family:'Space Grotesk',sans-serif}
 
   var API_URL = '/api/chat';
   var KEY = 'hustleclub_v1';
-  var QUOTA_KEY = 'hustleclub_quota';
+  // var QUOTA_KEY = 'hustleclub_quota'; // Removed - no longer used
   var FIRST_KEY = 'hustleclub_first';
 
   // Look. `theme` is one of THEMES below; `doodles` toggles the floating
@@ -317,7 +633,11 @@ button{font-family:'Space Grotesk',sans-serif}
 
   var state = {
     started: false, messages: [], busy: false,
-    planOpen: false, planHtml: '', rushNote: false
+    planOpen: false, planHtml: '', rushNote: false,
+    trialSuggested: false, trialCompleted: false,
+    // Set when the teen chooses to type instead of tapping an option.
+    // Clears on the next reply, so the next question is tap-first again.
+    freeText: false
   };
 
   var geo = {};
@@ -325,6 +645,51 @@ button{font-family:'Space Grotesk',sans-serif}
   var guardPromise = null;     // guardrails.js, imported once
   var retryText = null;        // last message, replayed by the "Try again" chip
   var planAtCount = -1;        // messages.length when planHtml was generated
+  var planRendered = null;     // planHtml the printable document was built from
+  var userQuestionCount = 0;  // Track number of user questions
+  var trialSuggestedAt = 0;    // When trial was suggested
+  // Answers a teen gets before the chat closes out. The LAST one of
+  // these is always the trial brief, never coaching — see send().
+  var MAX_QUESTIONS = 10;
+  // A returner has already spent that budget. They get a short second
+  // allowance to report what happened, then the plan.
+  var RETURN_QUESTIONS = 4;
+  var returned = false;        // arrived by code or QR, here to report back
+  var trialComplete = false;   // has the trial been marked as complete
+  var feedbackGiven = false;   // has the user provided feedback on their trial
+  var returnCode = null;       // the code for the user to return with
+  var RETURN_CODE_KEY = 'hustle-return-code'; // localStorage key for return code
+  
+  // Client-side code generation (simplified version of server's makeCode)
+  function makeCode(randomValues) {
+    var FIRST = ['sun', 'moon', 'star', 'sky', 'cloud', 'rain', 'snow', 'wind', 'river', 'ocean', 'lake', 'creek', 'hill', 'valley', 'meadow', 'forest', 'island', 'harbour', 'garden', 'orchard', 'sunrise', 'sunset', 'rainbow', 'comet', 'gold', 'silver', 'copper', 'amber', 'coral', 'jade', 'ruby', 'pearl'];
+    var SECOND = ['dance', 'skip', 'hop', 'leap', 'glide', 'soar', 'swoop', 'dash', 'wander', 'ramble', 'roam', 'stroll', 'paddle', 'sail', 'drift', 'float', 'giggle', 'chuckle', 'whistle', 'hum', 'sing', 'cheer', 'clap', 'shout', 'sparkle', 'shimmer', 'glimmer', 'twinkle', 'flicker', 'glow', 'gleam', 'shine'];
+    var THIRD = ['flower', 'daisy', 'tulip', 'poppy', 'lily', 'iris', 'clover', 'fern', 'blossom', 'petal', 'leaf', 'acorn', 'pinecone', 'seedling', 'sapling', 'sprout', 'jam', 'honey', 'syrup', 'toffee', 'fudge', 'nougat', 'caramel', 'marzipan', 'icecream', 'sorbet', 'gelato', 'sundae'];
+    
+    function pick(list, randomBytes) {
+      var n = list.length;
+      var limit = Math.floor(256 / n) * n;
+      for (;;) {
+        var b = randomBytes(1)[0];
+        if (b < limit) return list[b % n];
+      }
+    }
+    
+    // Simple fallback if crypto is not available
+    if (!randomValues) {
+      randomValues = function(n) {
+        var arr = new Uint8Array(n);
+        for (var i = 0; i < n; i++) {
+          arr[i] = Math.floor(Math.random() * 256);
+        }
+        return arr;
+      };
+    }
+    
+    return [FIRST, SECOND, THIRD].map(function(list) {
+      return pick(list, randomValues);
+    }).join('-');
+  }
 
   function $(id) { return document.getElementById(id); }
 
@@ -350,15 +715,23 @@ button{font-family:'Space Grotesk',sans-serif}
    * and max_tokens are absent. Don't add them back.
    */
   function llm(purpose, msgs) {
+    // Include session code for returning users to get rate limit exemptions
+    var body = {
+      purpose: purpose,
+      messages: msgs.map(function (m) { return { role: m.role, content: m.content }; }),
+      geo: geo || {},
+      timezone: timezone || ''
+    };
+    
+    // Add session code if this is a returning user
+    if (sessionCode && (returned || trialComplete)) {
+      body.sessionCode = sessionCode;
+    }
+    
     return fetch(API_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        purpose: purpose,
-        messages: msgs.map(function (m) { return { role: m.role, content: m.content }; }),
-        geo: geo || {},
-        timezone: timezone || ''
-      })
+      body: JSON.stringify(body)
     }).then(function (res) {
       if (res.ok) return res.json().then(readReply);
       return res.json().catch(function () { return {}; }).then(function (info) {
@@ -439,12 +812,249 @@ button{font-family:'Space Grotesk',sans-serif}
 
   function save(msgs) {
     try { localStorage.setItem(KEY, JSON.stringify({ messages: msgs, at: Date.now() })); } catch (e) {}
+    syncSession(msgs);
+  }
+
+  // ── The come-back-later store ─────────────────────────────────────
+  //
+  // ⚠️ WHY THIS EXISTS AT ALL.
+  // localStorage is per-device, not per-person. Two siblings on one
+  // iPad, or a class on a shared laptop, landed in each other's
+  // conversations — the old "someone on this device already has a
+  // hustle in motion, is that you?" prompt was a patch over exactly
+  // that. A code belongs to a person and travels with them; the
+  // device no longer decides whose hustle you see.
+  //
+  // The server holds the conversation under a three-word code with a
+  // retention window (sessions.js). Everything here degrades quietly:
+  // if the store is off or the network drops, the chat still works
+  // from localStorage and the teen simply has no code to take away.
+
+  var SESSION_KEY = 'hc_code_v1';
+  var sessionCode = null;
+  var syncing = false;      // one request in flight at a time
+  var syncQueued = null;    // the newest conversation waiting its turn
+
+  function plainMessages(msgs) {
+    return msgs.map(function (m) { return { role: m.role, content: m.content }; });
+  }
+
+  /**
+   * Push the conversation up under our code, minting one if we have
+   * none yet. Calls coalesce: a fast typist produces one request per
+   * round trip, not one per keystroke-turn.
+   */
+  function syncSession(msgs) {
+    if (!msgs || !msgs.length) return;
+    syncQueued = msgs;
+    if (syncing) return;
+    syncing = true;
+    var batch = syncQueued;
+    syncQueued = null;
+    var stage = batch.some(function (m) {
+      return m.role === 'assistant' && isTrialBrief(m.content);
+    }) ? 'trial' : 'coaching';
+
+    // If this is a trial brief, mark the session as trial complete on the server first
+    // The server will generate and return a return code for feedback entry
+    var trialPromise = Promise.resolve();
+    if (stage === 'trial' && (sessionCode) && !returnCode) {
+      trialPromise = markSessionTrialComplete(sessionCode, null) // null = let server generate
+        .then(function(data) {
+          if (data && data.returnCode) {
+            returnCode = data.returnCode;
+            try { localStorage.setItem(RETURN_CODE_KEY, returnCode); } catch (e) {}
+          }
+        })
+        .catch(function(err) {
+          console.warn('Could not mark session as trial complete:', err);
+          // If server fails, we can't proceed with return code functionality
+          // User will need to use session code to continue chat normally
+        });
+    }
+
+    trialPromise.then(function() {
+      return postSession(batch, stage, sessionCode);
+    })
+    .then(function (code) {
+      if (code && code !== sessionCode) {
+        sessionCode = code;
+        try { localStorage.setItem(SESSION_KEY, code); } catch (e) {}
+      }
+      // The mission card prints the code, so it has to repaint.
+      render();
+    })
+      .catch(function () { /* offline or store off: the chat is unaffected */ })
+      .then(function () {
+        syncing = false;
+        if (syncQueued) syncSession(syncQueued);
+      });
+  }
+
+  function postSession(msgs, stage, code) {
+    return fetch('/api/session', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code: code || undefined, messages: plainMessages(msgs), stage: stage })
+    }).then(function (res) {
+      // Our stored code has aged out of the store. Drop it and let the
+      // next write mint a fresh one rather than failing silently for
+      // the rest of the session.
+      if (res.status === 404 && code) {
+        sessionCode = null;
+        try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+        return postSession(msgs, stage, null);
+      }
+      if (!res.ok) throw new Error('save failed');
+      return res.json().then(function (d) { return d && d.code; });
+    });
+  }
+
+  /** Mark a session as trial complete and get a return code for feedback entry */
+  function markSessionTrialComplete(code, returnCodeParam) {
+    if (trialComplete) return Promise.resolve({ success: true, returnCode: returnCode || null }); // Already marked
+    
+    return fetch('/api/session/' + encodeURIComponent(code) + '/complete-trial', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ returnCode: returnCodeParam })
+    }).then(function (res) {
+      if (!res.ok) throw new Error('mark trial complete failed');
+      return res.json();
+    }).then(function (data) {
+      if (data && data.success) {
+        trialComplete = true;
+        // Return the data so caller can handle the returnCode
+        return data;
+      }
+      return data;
+    });
+  }
+
+  /** Mark a session as having received feedback */
+  function markSessionFeedbackGiven(code) {
+    return fetch('/api/session/' + encodeURIComponent(code) + '/feedback', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' }
+    }).then(function (res) {
+      if (!res.ok) throw new Error('mark feedback failed');
+      return res.json();
+    }).then(function (data) {
+      if (data && data.success) {
+        feedbackGiven = true;
+        // Clean up return code from localStorage since feedback is now given
+        try { 
+          localStorage.removeItem(RETURN_CODE_KEY);
+        } catch (e) {}
+        // User can now generate their plan
+        render();
+      }
+    }).catch(function () {
+      console.warn('Could not mark feedback as given');
+    });
+  }
+
+  /** Check session status for returning user */
+  function checkSessionStatus(code) {
+    return fetch('/api/session/' + encodeURIComponent(code) + '/status', {
+      method: 'GET',
+      headers: { 'content-type': 'application/json' }
+    }).then(function (res) {
+      if (!res.ok) throw new Error('session status check failed');
+      return res.json();
+    });
+  }
+
+  /** What Scout says the moment someone walks back in. */
+  var WELCOME_BACK = "You're back — nice. So how did the trial actually go?\n"
+    + 'OPTIONS: I made some sales | Nobody bought yet | I haven\'t run it yet';
+
+  /**
+   * Pull a conversation back by code and go straight to the question
+   * that matters. No "is that you?", no recap — they came back to
+   * report on the trial, so that is the first thing asked.
+   */
+  function restoreByCode(code) {
+    return fetch('/api/session/' + encodeURIComponent(String(code).trim()))
+      .then(function (res) {
+        if (res.ok) return res.json();
+        return res.json().catch(function () { return {}; }).then(function (info) {
+          throw new Error(info.message || "We couldn't find that code.");
+        });
+      })
+      .then(function (data) {
+        var msgs = (data.messages || []).filter(function (m) {
+          return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string';
+        });
+        if (!msgs.length) throw new Error('That code has nothing saved against it yet.');
+
+        sessionCode = String(code).trim().toLowerCase();
+        try {
+          localStorage.setItem(SESSION_KEY, sessionCode);
+          localStorage.setItem(KEY, JSON.stringify({ messages: msgs, at: Date.now() }));
+        } catch (e) {}
+
+        beginTrialReport(msgs);
+        return true;
+      });
+  }
+
+  /**
+   * Restore a returning user session using their return code for feedback entry.
+   */
+  function restoreReturningUser(returnCode) {
+    return checkSessionStatus(returnCode)
+      .then(function (data) {
+        if (!data || !data.isReturningUser) {
+          throw new Error('That return code is not valid for feedback entry. Please use your original session code.');
+        }
+        
+        // Store the return code and mark as returned
+        returnCode = data.returnCode || returnCode;
+        sessionCode = data.code; // Use the original session code
+        returned = true;
+        trialComplete = data.trialComplete || false;
+        feedbackGiven = data.feedbackGiven || false;
+        
+        try {
+          localStorage.setItem(RETURN_CODE_KEY, returnCode);
+          localStorage.setItem(SESSION_KEY, sessionCode);
+        } catch (e) {}
+        
+        // Load the actual session messages
+        return restoreByCode(sessionCode);
+      });
+  }
+
+  /**
+   * Switch into "reporting back" mode.
+   *
+   * A returner has already spent the coaching budget, so they get a
+   * short fresh allowance and never a second mission card — the next
+   * thing they want is the plan, built on the numbers they just went
+   * and collected.
+   */
+  function beginTrialReport(msgs) {
+    returned = true;
+    userQuestionCount = 0;
+    
+    // If this is a returning user coming back to give feedback
+    if (trialComplete && !feedbackGiven) {
+      var done = msgs.concat([{ role: 'assistant', content: 'Welcome back! Ready to tell me how your trial went?\nOPTIONS: It went great | It needs work | Start over' }]);
+      setState({ started: true, messages: done, busy: false, planOpen: false, freeText: false }, scrollDown);
+      save(done);
+    } else {
+      var done = msgs.concat([{ role: 'assistant', content: WELCOME_BACK }]);
+      setState({ started: true, messages: done, busy: false, planOpen: false, freeText: false }, scrollDown);
+      save(done);
+    }
   }
 
   function scrollDown() {
     requestAnimationFrame(function () {
       var el = $('chat-scroll');
       if (el) el.scrollTop = el.scrollHeight;
+      keepControlsInView();
     });
   }
 
@@ -456,23 +1066,41 @@ button{font-family:'Space Grotesk',sans-serif}
       if (!el) return;
       var rows = el.querySelectorAll(':scope > div');
       var lastRow = rows[rows.length - 1];
-      if (!lastRow) { el.scrollTop = el.scrollHeight; return; }
-      el.scrollTop += lastRow.getBoundingClientRect().top - el.getBoundingClientRect().top - 12;
+      if (lastRow) el.scrollTop += lastRow.getBoundingClientRect().top - el.getBoundingClientRect().top - 12;
+      else el.scrollTop = el.scrollHeight;
+      keepControlsInView();
     });
   }
 
-  // Client-side daily budget. Cosmetic only — the server enforces its
-  // own limits, and clearing localStorage resets this one.
+  /**
+   * Scroll the PAGE so the answer controls are actually on screen.
+   *
+   * ⚠️ THIS IS WHY THE APP LOOKED DEAD ON A PHONE.
+   * The chat transcript scrolls inside its own box, so a new reply moved
+   * nothing on the page itself. On a 375x844 handset the options and the
+   * text box sat at y≈1100 — a good 250px below the fold — and every
+   * reply left them there. The buttons were never broken or covered;
+   * they were simply off the bottom of the screen, with nothing to
+   * suggest scrolling. Anything that lands a new reply must call this.
+   */
+  function keepControlsInView() {
+    requestAnimationFrame(function () {
+      var card = $('chat-card');
+      if (!card || card.hidden) return;
+      var gap = card.getBoundingClientRect().bottom - (window.innerHeight || 0);
+      if (gap <= 0) return;
+      // Deliberately NOT behavior:'smooth'. A smooth scroll is driven by
+      // the compositor and quietly does nothing in some environments —
+      // measured here as scrollY staying at 0 while the options sat 88px
+      // below the fold. Silently failing is the one thing this must not
+      // do, so it jumps.
+      window.scrollBy(0, gap + 14);
+    });
+  }
+
+  // Client-side daily budget removed - no restrictions
   function canCall(kind) {
-    var day = new Date().toDateString();
-    var q;
-    try { q = JSON.parse(localStorage.getItem(QUOTA_KEY)) || {}; } catch (e) { q = {}; }
-    if (q.day !== day) q = { day: day };
-    var limits = { chat: 60, plan: 4 };
-    if ((q[kind] || 0) >= limits[kind]) return false;
-    q[kind] = (q[kind] || 0) + 1;
-    try { localStorage.setItem(QUOTA_KEY, JSON.stringify(q)); } catch (e) {}
-    return true;
+    return true; // Always allow calls - restrictions removed
   }
 
   // ── Rendering ─────────────────────────────────────────────────────
@@ -522,54 +1150,229 @@ button{font-family:'Space Grotesk',sans-serif}
         frag.appendChild(ul);
       } else {
         var p = document.createElement('p');
-        inline(b, p);
+        leadLabel(b, p);
         frag.appendChild(p);
       }
     });
     return frag;
   }
 
+  /**
+   * Bold the label that opens a line, so a reply full of
+   * "Startup costs? … Funding? … Unit maths:" reads as a list of
+   * answers instead of a wall of text.
+   *
+   * ⚠️ DONE HERE, NOT IN THE PROMPT, ON PURPOSE.
+   * The prompt does ask for bold labels, but a model that forgets
+   * markdown once produces an unreadable dump — and that is exactly
+   * what shipped. Deriving the emphasis from the punctuation the model
+   * writes anyway means the formatting cannot be forgotten.
+   *
+   * The word limits are what keep it from bolding whole sentences. A
+   * colon is a strong label signal, so it gets four words; a question
+   * mark is weak (any sentence can end in one) so it gets three, which
+   * catches "Funding?" and "Under 16?" while leaving "Which one's got
+   * you leaning?" alone.
+   */
+  function leadLabel(line, into) {
+    // Already-marked-up text is the model doing it properly: leave it.
+    if (/^\s*\*\*/.test(line)) return inline(line, into);
+    var m = /^([^:?*]{2,30}[:?])\s+(\S[\s\S]*)$/.exec(line);
+    if (m) {
+      var words = m[1].trim().split(/\s+/).length;
+      var limit = /:$/.test(m[1]) ? 4 : 3;
+      if (words <= limit) {
+        var strong = document.createElement('strong');
+        strong.textContent = m[1].trim();
+        into.appendChild(strong);
+        into.appendChild(document.createTextNode(' '));
+        return inline(m[2], into);
+      }
+    }
+    return inline(line, into);
+  }
+
   // Scout marks its own suggested replies with a trailing
-  // "OPTIONS: a | b | c" line. Strip it from the bubble and turn it into
-  // buttons — but only on the newest message, and not while busy.
+  // "OPTIONS: a | b | c" line.
+  //
+  // ⚠️ BE GENEROUS ABOUT WHAT COUNTS AS THAT LINE.
+  // This used to be a single /^OPTIONS:/im match, which missed every
+  // shape the model actually produces in the wild — "**OPTIONS:**" being
+  // the common one. The cost of a miss is not cosmetic: the raw
+  // "OPTIONS: a | b | c" text leaked into the chat bubble AND the teen
+  // got no buttons, which is half of "the app shows text with nothing
+  // to tap". So: markdown bolding, bullets, quote marks, "Option:", a
+  // full-width colon and a bullet separator are all accepted, and the
+  // scan runs from the last line up because the marker belongs at the
+  // end.
+  var OPTIONS_LINE = /^[\s>*#•-]*\*{0,2}\s*options?\s*\*{0,2}\s*[:：]\s*(.*)$/i;
+
+  function splitOptions(text) {
+    var lines = String(text == null ? '' : text).split('\n');
+    for (var i = lines.length - 1; i >= 0; i--) {
+      var m = lines[i].match(OPTIONS_LINE);
+      if (!m) continue;
+      var opts = parseOptions(m[1]);
+      if (!opts.length) continue;
+      lines.splice(i, 1);
+      return { text: lines.join('\n').trim(), options: opts };
+    }
+    // Last resort: the marker ran on from the end of a sentence rather
+    // than starting its own line.
+    var at = String(text).search(/\*{0,2}\s*options?\s*\*{0,2}\s*[:：]/i);
+    if (at > -1) {
+      var tail = String(text).slice(at).replace(/^[^:：]*[:：]/, '');
+      var late = parseOptions(tail);
+      if (late.length) return { text: String(text).slice(0, at).trim(), options: late };
+    }
+    return { text: String(text == null ? '' : text).trim(), options: [] };
+  }
+
+  function parseOptions(raw) {
+    return String(raw).replace(/\*\*/g, '').split(/\s*[|•]\s*/)
+      .map(function (s) { return s.trim().replace(/^[-*\s]+/, ''); })
+      .filter(Boolean);
+  }
+
+  // Every question must leave the teen something to tap. When a reply
+  // arrives without options — the model does drop the line sometimes —
+  // these stand in, and one of them opens the text box. Never let a turn
+  // end with nothing to act on.
+  var FALLBACK_OPTIONS = ['Type my own answer', 'Not sure yet', 'Ask me something else'];
+
+  // Openers a question wraps its real choices in. Stripped so
+  // "Want to tweak the price" becomes the tappable "Tweak the price".
+  var QUESTION_OPENERS = /^(?:so\s+)?(?:do you |would you |are you |want to |wanna |shall we |should we |ready to |do you want to |would you like to )/i;
+
+  /**
+   * Turn "Want to tweak the price, or ready to trial?" into
+   * ["Tweak the price", "Ready to trial", "Something else"].
+   *
+   * ⚠️ WHY BOTHER, WHEN THERE IS ALREADY A FALLBACK?
+   * The generic fallback ("Not sure yet" / "Ask me something else")
+   * keeps a turn from dead-ending, but it answers nothing — faced with
+   * a real either/or it is almost as useless as no buttons at all. An
+   * "A or B?" question carries its own options in plain sight, so read
+   * them out rather than shrugging.
+   *
+   * Returns null whenever the guess would be poor, and the caller
+   * drops back to the generic set. Better no derived option than a
+   * confusing one.
+   */
+  function deriveOptions(text) {
+    var lines = String(text).trim().split('\n').filter(function (l) { return l.trim(); });
+    var lastLine = (lines[lines.length - 1] || '').trim();
+    if (!/\?$/.test(lastLine)) return null;
+
+    var parts = lastLine.replace(/\?$/, '').split(/\s*,?\s+or\s+/i);
+    if (parts.length !== 2) return null; // three-way splits read badly as chips
+
+    var options = [];
+    for (var i = 0; i < parts.length; i++) {
+      // Only the FIRST half carries the question stem ("Want to …").
+      // Stripping the second half too turns "ready to trial" into a
+      // bare "Trial", which reads as a noun and loses the choice.
+      var part = parts[i].trim();
+      if (i === 0) part = part.replace(QUESTION_OPENERS, '').trim();
+      // Too long to sit on a button, or so short it says nothing.
+      if (!part || part.length > 32 || part.split(/\s+/).length > 5) return null;
+      options.push(part.charAt(0).toUpperCase() + part.slice(1));
+    }
+    if (options[0].toLowerCase() === options[1].toLowerCase()) return null;
+    options.push('Something else');
+    return options;
+  }
+
   function visibleMessages() {
     var chips = [];
     var last = state.messages[state.messages.length - 1];
     var list = state.messages.map(function (m) {
-      var content = m.content;
-      if (m.role === 'assistant') {
-        var match = content.match(/^OPTIONS:\s*(.+)$/im);
-        if (match) {
-          content = content.replace(/^OPTIONS:.*$/im, '').trim();
-          if (m === last && !state.busy) {
-            chips = match[1].split('|').map(function (s) { return s.trim(); })
-              .filter(Boolean);
-          }
-        }
-      }
-      return { role: m.role, content: content };
+      if (m.role !== 'assistant') return { role: m.role, content: m.content };
+      var split = splitOptions(m.content);
+      if (m === last && !state.busy) chips = split.options;
+      return { role: m.role, content: split.text };
     });
-    return { list: list, chips: chips };
+    if (last && last.role === 'assistant' && !state.busy && !chips.length) {
+      // The mission card carries no OPTIONS line of its own (four lines
+      // is the whole budget), so the two things anyone wants next are
+      // supplied here rather than spent on prompt tokens.
+      chips = isTrialBrief(last.content)
+        ? ['I ran my trial', 'Get my plan']
+        : deriveOptions(last.content) || FALLBACK_OPTIONS.slice();
+    }
+    // On the mission card there are exactly two things worth doing, and
+    // a third "type your own" link only dilutes them.
+    var onMission = Boolean(last && last.role === 'assistant' && isTrialBrief(last.content));
+    return { list: list, chips: chips, onMission: onMission };
   }
 
   function render() {
     var v = visibleMessages();
 
+    // Only the most recent trial brief counts as "the survey is done" —
+    // an older one still sitting in history (say, a returning user
+    // answers more questions and earns a second mission) must not grow
+    // its own copy of the QR/code panel alongside it.
+    var lastTrialBrief = null;
+    v.list.forEach(function (m) {
+      if (m.role === 'assistant' && isTrialBrief(m.content)) lastTrialBrief = m;
+    });
+    var isFinal = Boolean(lastTrialBrief && sessionCode);
+
     $('hero-start').hidden = state.started;
-    $('chat-card').hidden = !state.started;
+    var chatCard = $('chat-card');
+    chatCard.hidden = !state.started || isFinal;
+    // Drives the mobile rule that folds the hero copy away, so the chat
+    // controls sit within reach on a phone.
+    document.body.className = state.started ? 'is-chatting' : '';
 
     var scroll = $('chat-scroll');
     scroll.textContent = '';
-    v.list.forEach(function (m) {
-      var isUser = m.role === 'user';
-      var row = document.createElement('div');
-      row.className = 'row ' + (isUser ? 'is-user' : 'is-bot');
-      var bubble = document.createElement('div');
-      bubble.className = 'bubble ' + (isUser ? 'is-user' : 'is-bot');
-      bubble.appendChild(format(m.content));
-      row.appendChild(bubble);
-      scroll.appendChild(row);
-    });
+
+    // The trial brief is the end of the chat, not another turn in it —
+    // it gets a standalone screen of its own (reused across renders, so
+    // it is cleared and rebuilt rather than duplicated) instead of
+    // sitting inside the chat card alongside the rest of the transcript.
+    var finalContainer = $('final-mission-container');
+    if (isFinal) {
+      if (!finalContainer) {
+        finalContainer = document.createElement('div');
+        finalContainer.id = 'final-mission-container';
+        finalContainer.style.maxWidth = '720px';
+        finalContainer.style.margin = '0 auto';
+        chatCard.parentNode.insertBefore(finalContainer, chatCard);
+      }
+      finalContainer.hidden = false;
+      finalContainer.textContent = '';
+      finalContainer.appendChild(missionCard(lastTrialBrief.content));
+      // Auto-scroll to the mission card and focus on it
+      setTimeout(function () {
+        var card = finalContainer.getElementsByClassName('ms')[0];
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.style.boxShadow = '0 0 0 4px var(--p)';
+          setTimeout(function () { card.style.boxShadow = '8px 8px 0 var(--ink)'; }, 2000);
+        }
+      }, 100);
+    } else {
+      if (finalContainer) finalContainer.hidden = true;
+      v.list.forEach(function (m) {
+        var isUser = m.role === 'user';
+        // The trial brief gets a card of its own instead of a bubble —
+        // it is the end of the chat, not another turn in it.
+        if (!isUser && isTrialBrief(m.content)) {
+          scroll.appendChild(missionCard(m.content));
+          return;
+        }
+        var row = document.createElement('div');
+        row.className = 'row ' + (isUser ? 'is-user' : 'is-bot');
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble ' + (isUser ? 'is-user' : 'is-bot');
+        bubble.appendChild(format(m.content));
+        row.appendChild(bubble);
+        scroll.appendChild(row);
+      });
+    }
     if (state.busy) {
       scroll.appendChild($('typing-tpl').content.cloneNode(true));
     }
@@ -592,19 +1395,405 @@ button{font-family:'Space Grotesk',sans-serif}
       chipList.appendChild(b);
     });
     $('chip-panel').hidden = v.chips.length === 0;
+    // The standing link is redundant when the options already offer it.
+    $('chip-free').hidden = state.freeText || v.onMission || v.chips.some(function (c) { return /^type my own/i.test(c); });
 
     var inputRow = $('input-row');
-    inputRow.hidden = v.chips.length > 0;
+    // Options normally replace the text box, to keep the chat tap-first.
+    // Once "or type my own answer" is used, both are on screen at once —
+    // the alternative is a teen with an answer and nowhere to put it.
+    inputRow.hidden = v.chips.length > 0 && !state.freeText;
     inputRow.style.opacity = state.busy ? '.5' : '';
     inputRow.style.pointerEvents = state.busy ? 'none' : '';
 
-    $('btn-plan').hidden = state.messages.length < 6;
+    // Show plan button after 5 user questions — and always to someone
+    // who came back to report, since the plan is why they returned.
+    $('btn-plan').hidden = !returned && userQuestionCount < 5;
 
     $('plan-modal').hidden = !state.planOpen;
     $('rush-note').hidden = !state.rushNote;
-    // planHtml has been through sanitize-plan.js on the server AND again
-    // here before it was ever put in state — see makePlan().
-    $('plan-body').innerHTML = state.planHtml;
+    // Rebuilding the plan document on every render would throw away the
+    // scroll position mid-read, so it is rebuilt only when the plan
+    // itself changed.
+    if (planRendered !== state.planHtml) {
+      planRendered = state.planHtml;
+      var body = $('plan-body');
+      body.textContent = '';
+      // planHtml has been through sanitize-plan.js on the server AND
+      // again here before it was ever put in state — see makePlan().
+      if (state.planHtml) body.appendChild(buildPlanDoc(state.planHtml));
+    }
+  }
+
+  // ── The mission card ──────────────────────────────────────────────
+  //
+  // TRIAL_SYS returns exactly four labelled lines. The labels are the
+  // contract between the prompt and this renderer — change one and you
+  // must change the other. A brief that arrives off-script still shows
+  // (isTrialBrief only needs MISSION and THEN), it just renders the
+  // stray lines as plain rows.
+
+  var MISSION_KEYS = ['MISSION', 'PRICE', 'SAY', 'THEN'];
+
+  function isTrialBrief(text) {
+    return /^\s*MISSION\s*:/im.test(text) && /^\s*THEN\s*:/im.test(text);
+  }
+
+  function missionCard(text) {
+    var card = el('div', 'ms');
+    var flag = el('div', 'ms-flag');
+    var dot = el('i', null, '✶');
+    dot.setAttribute('aria-hidden', 'true');
+    flag.appendChild(dot);
+    flag.appendChild(el('span', null, 'YOUR MISSION!'));
+    card.appendChild(flag);
+
+    var body = el('div', 'ms-body');
+    String(text).split('\n').forEach(function (line) {
+      if (!line.trim()) return;
+      var m = /^\s*([A-Za-z ]+?)\s*:\s*(.+)$/.exec(line);
+      var key = m ? m[1].trim().toUpperCase() : '';
+      if (!m || MISSION_KEYS.indexOf(key) < 0) {
+        // Off-script line: keep the words, drop the styling.
+        var loose = el('div', 'ms-row');
+        loose.appendChild(el('div', 'ms-val', line.trim()));
+        body.appendChild(loose);
+        return;
+      }
+      var row = el('div', 'ms-row' + (key === 'SAY' ? ' is-say' : ''));
+      row.appendChild(el('div', 'ms-key', key));
+      row.appendChild(el('div', 'ms-val', m[2].trim()));
+      body.appendChild(row);
+    });
+    card.appendChild(body);
+    if (sessionCode) {
+      // Only show one QR panel - prioritize returnCode (most recent survey) over sessionCode
+      if (returnCode) {
+        // Show only the return code panel (most recent survey completion)
+        card.appendChild(recallPanel(null, returnCode));
+      } else {
+        // Show only the session code panel
+        card.appendChild(recallPanel(sessionCode));
+      }
+    }
+    return card;
+  }
+
+  /** The bright panel that carries the code home: camera icon + code + message. */
+  function recallPanel(code, returnCode) {
+    var panel = el('div', 'qr-panel');
+    
+    // Header
+    var header = el('h2');
+    header.style.fontFamily = "'Bungee',sans-serif";
+    header.style.fontSize = "clamp(26px,4vw,38px)";
+    header.style.margin = "0 0 8px";
+    header.textContent = 'All Set - No Go Prove It !!';
+    panel.appendChild(header);
+
+    var introText = el('p');
+    introText.style.fontSize = "16px";
+    introText.style.margin = "0 0 34px";
+    introText.innerHTML = 'Start your trial and come back when you done.';
+    panel.appendChild(introText);
+    
+    // Code display
+    var codeDisplay = el('div', 'code-display');
+    if (returnCode) {
+      codeDisplay.appendChild(el('div', 'code-label', 'Feedback Code'));
+      codeDisplay.appendChild(el('div', 'code-value', returnCode));
+    } else if (code) {
+      codeDisplay.appendChild(el('div', 'code-label', 'Your Code'));
+      codeDisplay.appendChild(el('div', 'code-value', code));
+    }
+    panel.appendChild(codeDisplay);
+    
+    // Download link
+    var theCode = returnCode || code;
+    var downloadLink = el('a', 'code-download');
+    downloadLink.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(theCode));
+    downloadLink.setAttribute('download', 'hustle-code.txt');
+    downloadLink.appendChild(el('span', null, 'Download Code ↓'));
+    panel.appendChild(downloadLink);
+    
+    // Message
+    var message = 'Take a snap or download your code and come back after your trial to generate your business plan.';
+    panel.appendChild(el('p', 'qr-note', message));
+    
+    return panel;
+  }
+
+
+
+  // ── The printable plan document ───────────────────────────────────
+  //
+  // What arrives from the model is a flat, attribute-free run of
+  // h1/h2/h3/p/ul/table — sanitize-plan.js drops every attribute, on
+  // purpose, so nothing the model writes can carry a class, a style or
+  // a handler. That leaves the branding to be applied HERE, by reading
+  // the structure and rebuilding it: numbered cards, a budget table,
+  // tick boxes, a day-by-day timeline, the compliance strip.
+  //
+  // Sections are recognised by heading text and tag shape, matching the
+  // skeleton in prompts.js. Both halves have to move together. Anything
+  // unrecognised still lands as a plain numbered card, so an off-script
+  // plan degrades instead of disappearing.
+
+  // Section badges, cycling the brand palette in template order.
+  var BADGES = ['var(--p)', 'var(--t)', 'var(--y)', 'var(--v)'];
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function star(cls) {
+    var s = el('span', cls || 'pl-star', '✶');
+    s.setAttribute('aria-hidden', 'true');
+    return s;
+  }
+
+  // Printed at the head of the sheet and again at the foot, so the
+  // parent warning survives a plan that runs onto a second page.
+  function planStrip(foot) {
+    var d = el('div', foot ? 'pl-strip is-foot' : 'pl-strip');
+    var l = el('div', 'pl-strip-l');
+    l.appendChild(star());
+    l.appendChild(el('span', null, 'Always talk to a parent before actioning your plan'));
+    d.appendChild(l);
+    d.appendChild(el('div', 'pl-strip-r', 'Hustler Business Plan'));
+    return d;
+  }
+
+  function buildPlanDoc(html) {
+    var src = document.createElement('div');
+    src.innerHTML = html;
+    var nodes = Array.prototype.slice.call(src.children);
+
+    var doc = el('div', 'pl-doc');
+    doc.appendChild(planStrip(false));
+    var page = el('div', 'pl-page');
+    doc.appendChild(page);
+
+    // Everything before the first <h2> is the masthead: the venture
+    // headline, then the Hustler/cash/break-even chips.
+    var i = 0, title = '', chips = null;
+    for (; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (n.tagName === 'H2') break;
+      if (n.tagName === 'H1' && !title) title = n.textContent.trim();
+      else if (n.tagName === 'UL' && !chips) chips = n;
+    }
+    // A plan written to an older skeleton opens with an <h2> title
+    // instead of an <h1>. Take it rather than printing an untitled page.
+    if (!title && nodes[i] && !/^\s*\d/.test(nodes[i].textContent)) {
+      title = nodes[i].textContent.trim().replace(/^[^\w$]+/, '');
+      i++;
+    }
+
+    var top = el('div', 'pl-top');
+    var brand = el('div', 'pl-brand');
+    brand.appendChild(star());
+    brand.appendChild(el('span', null, 'HUSTLE CLUB'));
+    top.appendChild(brand);
+    top.appendChild(el('span', 'pl-tag', 'the plan, one page at a time'));
+    page.appendChild(top);
+    page.appendChild(el('h1', 'pl-title', title || 'Hustler Business Plan'));
+    if (chips) { chips.className = 'pl-chips'; page.appendChild(chips); }
+
+    // Split the rest into one group per <h2>.
+    var groups = [], cur = null;
+    for (; i < nodes.length; i++) {
+      if (nodes[i].tagName === 'H2') { cur = { title: nodes[i].textContent.trim(), body: [] }; groups.push(cur); continue; }
+      if (!cur) { cur = { title: '', body: [] }; groups.push(cur); }
+      cur.body.push(nodes[i]);
+    }
+
+    var num = 0, fine = false;
+    groups.forEach(function (g) {
+      if (!g.title && !g.body.length) return;
+      if (/one[\s-]?liner/i.test(g.title)) { page.appendChild(planBand(g)); return; }
+      if (/scout says/i.test(g.title)) { page.appendChild(planScout(g)); return; }
+      if (/small print|fine print|disclaimer/i.test(g.title)) { fine = true; page.appendChild(planFine(g)); return; }
+      var m = /^(\d+)\s*[.)\-—]?\s*/.exec(g.title);
+      num = m ? Number(m[1]) : num + 1;
+      page.appendChild(planCard(num, m ? g.title.slice(m[0].length) : g.title, g.body));
+    });
+
+    // The small print carries the safety and legal wording, so it is
+    // never left to chance: if the model dropped it, it goes in anyway.
+    if (!fine) page.appendChild(planFine({ title: 'The small print', body: [] }));
+
+    doc.appendChild(planStrip(true));
+    var foot = el('div', 'pl-foot');
+    foot.appendChild(el('span', null, 'hustleclub.app'));
+    foot.appendChild(el('span', null, 'Built with Scout ✶ Learning tool, not advice'));
+    doc.appendChild(foot);
+    return doc;
+  }
+
+  function planBand(g) {
+    var d = el('div', 'pl-band');
+    d.appendChild(el('h4', null, g.title || 'The one-liner'));
+    g.body.forEach(function (n) { d.appendChild(n); });
+    return d;
+  }
+
+  function planScout(g) {
+    var d = el('div', 'pl-scout');
+    d.appendChild(star());
+    var col = el('div', null);
+    col.appendChild(el('h4', null, g.title || 'Scout says'));
+    g.body.forEach(function (n) { col.appendChild(n); });
+    d.appendChild(col);
+    return d;
+  }
+
+  var FINE_PRINT = 'Talk to an adult wherever money, strangers or contracts show up. Get proper financial ' +
+    'advice if real money gets involved. Rules differ by region and change — check your current local rules ' +
+    'before selling anything. This plan is for learning and inspiration only, not legal, financial, tax or ' +
+    'professional advice, and its creators take no responsibility for business decisions made from it.';
+
+  function planFine(g) {
+    var d = el('div', 'pl-fine');
+    d.appendChild(el('h4', null, g.title || 'The small print'));
+    if (g.body.length) g.body.forEach(function (n) { d.appendChild(n); });
+    else d.appendChild(el('p', null, FINE_PRINT));
+    if (!/have fun/i.test(d.textContent)) d.appendChild(el('p', null, 'Have fun, be safe, learn and grow.'));
+    return d;
+  }
+
+  function planCard(num, title, body) {
+    var c = el('section', 'pl-card');
+    var head = el('div', 'pl-head');
+    var badge = el('span', 'pl-num', String(num));
+    var colour = BADGES[(num - 1) % BADGES.length];
+    badge.style.background = colour;
+    if (colour === 'var(--y)') badge.style.color = 'var(--ink)';
+    head.appendChild(badge);
+    head.appendChild(el('h2', null, title || 'Your plan'));
+    c.appendChild(head);
+    fillCard(c, body, title);
+    return c;
+  }
+
+  function fillCard(card, body, title) {
+    // Split at <h3>: what comes first is the card's own body, the rest
+    // are sub-sections (Who / First ten / Next fifty, Quality checklist).
+    var lead = [], subs = [], cur = null;
+    body.forEach(function (n) {
+      if (n.tagName === 'H3') { cur = { title: n.textContent.trim(), body: [] }; subs.push(cur); return; }
+      (cur ? cur.body : lead).push(n);
+    });
+
+    var table = lead.filter(function (n) { return n.tagName === 'TABLE'; })[0];
+    if (table) card.appendChild(moneyBlock(table, lead));
+    else lead.forEach(function (n) { card.appendChild(dress(n, title)); });
+
+    if (subs.length > 1) {
+      var grid = el('div', 'pl-subs');
+      subs.forEach(function (s) {
+        var box = el('div', 'pl-sub');
+        box.appendChild(el('h3', null, s.title));
+        s.body.forEach(function (n) { box.appendChild(dress(n, s.title)); });
+        grid.appendChild(box);
+      });
+      card.appendChild(grid);
+    } else if (subs.length === 1) {
+      var blk = el('div', 'pl-block');
+      blk.appendChild(el('h3', null, subs[0].title));
+      subs[0].body.forEach(function (n) { blk.appendChild(dress(n, subs[0].title)); });
+      card.appendChild(blk);
+    }
+  }
+
+  // A list becomes tick boxes or a day timeline depending on where it
+  // sits; anything else is passed through untouched.
+  function dress(node, context) {
+    context = context || '';
+    if (node.tagName === 'TABLE') return dressTable(node);
+    if (node.tagName !== 'UL' && node.tagName !== 'OL') return node;
+    var items = Array.prototype.slice.call(node.children).filter(function (li) { return li.tagName === 'LI'; });
+    if (!items.length) return node;
+    if (/checklist/i.test(context)) return checkList(items);
+    if (/week|day/i.test(context) && items.filter(leadsWithLabel).length > items.length / 2) return dayList(items);
+    return node;
+  }
+
+  function leadsWithLabel(li) {
+    return li.firstElementChild && li.firstElementChild.tagName === 'STRONG';
+  }
+
+  function checkList(items) {
+    var ul = el('ul', 'pl-check');
+    items.forEach(function (li) {
+      var row = document.createElement('li');
+      var text = el('span', null);
+      while (li.firstChild) text.appendChild(li.firstChild);
+      row.appendChild(text);
+      ul.appendChild(row);
+    });
+    return ul;
+  }
+
+  function dayList(items) {
+    var ul = el('ul', 'pl-days');
+    items.forEach(function (li) {
+      var label = '';
+      if (leadsWithLabel(li)) { label = li.firstElementChild.textContent.trim(); li.removeChild(li.firstElementChild); }
+      var row = document.createElement('li');
+      row.appendChild(el('span', 'pl-day', label || '✶'));
+      var rest = el('span', null);
+      while (li.firstChild) rest.appendChild(li.firstChild);
+      // The label often ends "Day 1 — ", leaving a stray dash behind.
+      if (rest.firstChild && rest.firstChild.nodeType === 3) {
+        rest.firstChild.nodeValue = rest.firstChild.nodeValue.replace(/^[\s:—–-]+/, '');
+      }
+      row.appendChild(rest);
+      ul.appendChild(row);
+    });
+    return ul;
+  }
+
+  // Budget table on the left, the Funding/Prices/Ledger/Target lines as
+  // boxes on the right — the layout only makes sense when both exist.
+  function moneyBlock(table, lead) {
+    var facts = el('div', 'pl-facts');
+    var loose = [];
+    lead.forEach(function (n) {
+      if (n === table) return;
+      if (n.tagName === 'P' && n.firstElementChild && n.firstElementChild.tagName === 'STRONG') {
+        n.className = /target|goal/i.test(n.firstElementChild.textContent) ? 'pl-fact is-key' : 'pl-fact';
+        facts.appendChild(n);
+        return;
+      }
+      loose.push(n);
+    });
+
+    var out = document.createDocumentFragment();
+    if (facts.children.length) {
+      var grid = el('div', 'pl-money');
+      var left = el('div', null);
+      left.appendChild(dressTable(table));
+      grid.appendChild(left);
+      grid.appendChild(facts);
+      out.appendChild(grid);
+    } else {
+      out.appendChild(dressTable(table));
+    }
+    loose.forEach(function (n) { out.appendChild(n); });
+    return out;
+  }
+
+  function dressTable(table) {
+    table.className = 'pl-table';
+    Array.prototype.forEach.call(table.rows, function (row) {
+      var first = row.cells[0];
+      if (first && /^\s*(grand\s+)?total\b/i.test(first.textContent)) row.className = 'is-total';
+    });
+    return table;
   }
 
   // ── Actions ───────────────────────────────────────────────────────
@@ -618,7 +1807,7 @@ button{font-family:'Space Grotesk',sans-serif}
 
   function reply(msgs, text, scroll) {
     var done = msgs.concat([{ role: 'assistant', content: text }]);
-    setState({ started: true, messages: done, busy: false }, scroll || scrollToReply);
+    setState({ started: true, messages: done, busy: false, freeText: false }, scroll || scrollToReply);
     save(done);
   }
 
@@ -627,19 +1816,52 @@ button{font-family:'Space Grotesk',sans-serif}
     if (!text || state.busy) return;
     var msgs = state.messages.concat([{ role: 'user', content: text }]);
 
+    // Count user questions (only count if not a chip selection)
+    if (!text.startsWith('OPTIONS:') && !text.includes('OPTIONS:')) {
+      userQuestionCount++;
+    }
+
     guard().then(function (g) {
       var check = g.screenInput(text);
       if (!check.ok) { reply(msgs, check.reply); return; }
 
-      if (!canCall('chat')) {
+      // Suggest trial after 5 questions
+      if (userQuestionCount === 5 && !state.trialSuggested) {
+        setState({ trialSuggested: true });
+        trialSuggestedAt = msgs.length;
+      }
+
+      // ⚠ THE LAST TURN IS RESERVED, NOT SPENT ON COACHING.
+      // The budget is MAX_QUESTIONS answers; the final one always comes
+      // back as the trial brief (TRIAL_SYS in prompts.js) — the specific
+      // "go sell six of these, at this price, saying this" message. It
+      // used to be a hard-coded line that read the same whether they
+      // were baking cookies or mowing lawns, and it was the last thing
+      // they ever saw. Now it is written from their own conversation.
+      var purpose = 'chat';
+      if (returned) {
+        // Reporting back: never a second mission card, and the exit is
+        // the plan rather than another trip out the door.
+        if (userQuestionCount > RETURN_QUESTIONS) {
+          reply(msgs, "That's real-world data — exactly what your plan was missing. Time to grab it.\nOPTIONS: Get my plan | Start over");
+          return;
+        }
+      } else if (userQuestionCount > MAX_QUESTIONS) {
+        // Generate a trial brief even if we exceeded MAX_QUESTIONS
+        purpose = 'trial';
+      } else if (userQuestionCount === MAX_QUESTIONS) {
+        purpose = 'trial';
+      }
+
+      if (!canCall(purpose)) {
         reply(msgs, "Scout's clocked off for the day — you've used up today's chat time. Everything's saved right here, so come back tomorrow and we'll pick up exactly where we left off. Perfect time to go run that trial.");
         return;
       }
 
-      setState({ started: true, messages: msgs, busy: true }, scrollDown);
+      setState({ started: true, messages: msgs, busy: true, freeText: false }, scrollDown);
       save(msgs);
 
-      return llm('chat', msgs).then(function (answer) {
+      return llm(purpose, msgs).then(function (answer) {
         reply(msgs, answer);
       }, function (e) {
         // e.friendly is teen-readable copy the server already wrote
@@ -660,6 +1882,18 @@ button{font-family:'Space Grotesk',sans-serif}
   }
 
   function pickChip(label) {
+    // Not an answer — it opens the text box for one that isn't listed.
+    if (/^type my own/i.test(label)) {
+      setState({ freeText: true }, function () {
+        var box = $('chat-input');
+        if (box) { box.focus(); keepControlsInView(); }
+      });
+      return;
+    }
+    // Reporting back from the same device needs no code — they never
+    // left. Without this the cap would bounce them into the "go run
+    // it" nudge they just tapped away from, forever.
+    if (/ran my trial|already ran/i.test(label)) return beginTrialReport(state.messages);
     if (/start over|start fresh/i.test(label)) return reset();
     if (/printable plan|get my plan/i.test(label)) return makePlan();
     if (/^try again$/i.test(label) && retryText) {
@@ -674,11 +1908,18 @@ button{font-family:'Space Grotesk',sans-serif}
   }
 
   function reset() {
-    if (!confirm('Start fresh? The business plan and trial already on this device get wiped for good.')) return;
-    try { localStorage.removeItem(KEY); } catch (e) {}
+    if (!confirm('Start fresh? This device forgets your code, so write it down first if you want that hustle back.')) return;
+    try { localStorage.removeItem(KEY); localStorage.removeItem(SESSION_KEY); } catch (e) {}
     planAtCount = -1;
     retryText = null;
-    setState({ started: false, messages: [], busy: false, planHtml: '', planOpen: false, rushNote: false });
+    userQuestionCount = 0;
+    trialSuggestedAt = 0;
+    // The stored session is NOT deleted — the code still works from
+    // another device, and an unauthenticated delete would let anyone
+    // holding a code destroy someone's work. Expiry is the erase path.
+    sessionCode = null;
+    returned = false;
+    setState({ started: false, messages: [], busy: false, planHtml: '', planOpen: false, rushNote: false, trialSuggested: false, trialCompleted: false, freeText: false });
   }
 
   function makePlan() {
@@ -731,6 +1972,41 @@ button{font-family:'Space Grotesk',sans-serif}
       '&body=' + encodeURIComponent(text);
   }
 
+  // ── Code entry ────────────────────────────────────────────────────
+
+  function openCodeModal() {
+    $('code-modal').hidden = false;
+    var box = $('code-input');
+    if (box) { box.focus(); box.select(); }
+  }
+
+  function closeCodeModal() {
+    $('code-modal').hidden = true;
+    showCodeError('');
+  }
+
+  function showCodeError(message) {
+    var el = $('code-error');
+    el.textContent = message || '';
+    el.hidden = !message;
+  }
+
+  function submitCode() {
+    var box = $('code-input');
+    var code = (box.value || '').trim();
+    if (!code) return showCodeError('Type the three words from your card.');
+    showCodeError('');
+    $('code-go').disabled = true;
+    restoreByCode(code).then(function () {
+      $('code-go').disabled = false;
+      box.value = '';
+      closeCodeModal();
+    }, function (err) {
+      $('code-go').disabled = false;
+      showCodeError((err && err.message) || "We couldn't find that code.");
+    });
+  }
+
   // ── Wiring ────────────────────────────────────────────────────────
   // Every listener is attached here, once, by id. Nothing depends on an
   // inline on* attribute, so a handler can never go missing.
@@ -748,24 +2024,97 @@ button{font-family:'Space Grotesk',sans-serif}
     $('hero-input').addEventListener('keydown', enterKey(function () { send(grabInput('hero-input')); }));
     $('chat-send').addEventListener('click', function () { send(grabInput('chat-input')); });
     $('chat-input').addEventListener('keydown', enterKey(function () { send(grabInput('chat-input')); }));
+    $('chip-free').addEventListener('click', function () { pickChip('Type my own answer'); });
+    $('btn-code').addEventListener('click', function () { showCodeError(''); openCodeModal(); });
+    $('code-cancel').addEventListener('click', closeCodeModal);
+    $('code-go').addEventListener('click', submitCode);
+    $('code-input').addEventListener('keydown', enterKey(submitCode));
+    
+    // Handle file upload for code
+    $('code-upload').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function (event) {
+          var content = event.target.result.trim();
+          if (content) {
+            $('code-input').value = content;
+            submitCode();
+          } else {
+            showCodeError('The uploaded file is empty. Please try again.');
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
     $('btn-plan').addEventListener('click', makePlan);
     $('btn-reset').addEventListener('click', reset);
     $('plan-print-btn').addEventListener('click', function () { window.print(); });
-    $('plan-email-btn').addEventListener('click', emailPlan);
     $('plan-close-btn').addEventListener('click', function () { setState({ planOpen: false }); });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && state.planOpen) setState({ planOpen: false });
     });
 
     Array.prototype.forEach.call(document.querySelectorAll('[data-starter]'), function (b) {
-      b.addEventListener('click', function () { send(b.getAttribute('data-starter')); });
+      b.addEventListener('click', function () {
+        var starterText = b.getAttribute('data-starter');
+        if (starterText === "I've already got an idea") {
+          // Special handling: send the message but force free text mode
+          // This tells Scout the user has an idea and wants to describe it
+          setState({ freeText: true });
+          send(starterText);
+        } else {
+          send(starterText);
+        }
+      });
     });
 
     // Stamp the first visit so makePlan() can tell a speed-runner from
     // someone who actually ran their trial week.
+    // "Have they been here before?" decides whether the code box even
+    // appears. A first-time visitor has no code, so offering the box
+    // would be a dead end they have to work out for themselves.
+    var beenHereBefore = false;
     try {
-      if (!localStorage.getItem(FIRST_KEY)) localStorage.setItem(FIRST_KEY, String(Date.now()));
+      beenHereBefore = !!localStorage.getItem(FIRST_KEY);
+      if (!beenHereBefore) localStorage.setItem(FIRST_KEY, String(Date.now()));
+      sessionCode = localStorage.getItem(SESSION_KEY) || null;
+      returnCode = localStorage.getItem(RETURN_CODE_KEY) || null;
     } catch (e) {}
+    // Always show the code button so returning users can add their code
+    $('code-row').hidden = false;
+
+    // Arrived by QR or return code. Pull the hustle down and ask about the trial
+    // straight away — that is the entire reason they scanned.
+    var incoming = null;
+    var returnCodeParam = null;
+    try {
+      var params = new URLSearchParams(location.search);
+      incoming = params.get('c');
+      returnCodeParam = params.get('returnCode');
+    } catch (e) {}
+    
+    if (incoming || returnCodeParam) {
+      // Drop the parameter so a refresh does not re-run the restore
+      // (and so the code stops sitting in the address bar).
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+      render();
+      
+      // Check if this is a return code for feedback entry
+      if (returnCodeParam) {
+        restoreReturningUser(returnCodeParam).catch(function (err) {
+          showCodeError(err && err.message);
+          openCodeModal();
+        });
+      } else {
+        // Regular session code
+        restoreByCode(incoming).catch(function (err) {
+          showCodeError(err && err.message);
+          openCodeModal();
+        });
+      }
+      return;
+    }
 
     // Resume an existing hustle. The nudge is appended once, so a
     // reload does not stack them up.
@@ -784,8 +2133,18 @@ button{font-family:'Space Grotesk',sans-serif}
       }
     } catch (e) {}
 
-    if (restored) setState({ started: true, messages: restored }, scrollDown);
-    else render();
+    if (restored) {
+      // Count user questions in restored conversation
+      userQuestionCount = restored.filter(function(m) { return m.role === 'user'; }).length;
+      // If we have user questions, check if we should suggest trial
+      if (userQuestionCount >= 5) {
+        setState({ started: true, messages: restored, trialSuggested: true }, scrollDown);
+      } else {
+        setState({ started: true, messages: restored }, scrollDown);
+      }
+    } else {
+      render();
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

@@ -121,7 +121,7 @@ a{color:var(--v);text-decoration-thickness:2px}a:hover{color:var(--p)}
       </div>
       <div style="background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 var(--ink);padding:18px;display:flex;gap:14px;align-items:center">
         <div style="font-family:'Bungee',sans-serif;font-size:26px;color:var(--t)">2</div>
-        <div style="font-weight:700;font-size:15px;line-height:1.35">Run your trial week for real</div>
+        <div style="font-weight:700;font-size:15px;line-height:1.35">Go test your idea - sell to 10 people this week!</div>
       </div>
       <div style="background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 var(--ink);padding:18px;display:flex;gap:14px;align-items:center">
         <div style="font-family:'Bungee',sans-serif;font-size:26px;color:var(--v)">3</div>
@@ -164,7 +164,7 @@ a{color:var(--v);text-decoration-thickness:2px}a:hover{color:var(--p)}
       <div style="background:var(--p);border:3px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 var(--ink);padding:26px;color:#fff;transform:rotate(-1deg)">
         <div style="font-family:'Bungee',sans-serif;font-size:30px;margin-bottom:8px;text-shadow:2px 2px 0 var(--ink)">PDF</div>
         <div style="font-family:'Bungee',sans-serif;font-size:18px;margin-bottom:8px;text-shadow:2px 2px 0 var(--ink)">Hustler Business Plan</div>
-        <p style="margin:0;font-size:14px;line-height:1.5">Run your trial week, come back with the numbers, and print your one-page plan.</p>
+        <p style="margin:0;font-size:14px;line-height:1.5">Test your idea with real customers, come back with the results, and print your one-page plan.</p>
       </div>
     </div>
   </section>
@@ -206,7 +206,7 @@ a{color:var(--v);text-decoration-thickness:2px}a:hover{color:var(--p)}
           <sc-if value="{{ rushNote }}" hint-placeholder-val="{{ false }}">
             <div data-om-raster="" style="background:var(--y);border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);padding:16px 18px;margin:16px 0 6px">
               <div style="font-family:'Bungee',sans-serif;font-size:14px;margin-bottom:6px">Whoa, speed-runner ⚡</div>
-              <p style="margin:0;font-size:14px;line-height:1.5">Love the energy — your plan's all yours, no gatekeeping. But real talk: the founders who win are the ones who run the trial first. Knock on doors, take real money, collect the nos. A plan built on real numbers beats a plan built on guesses every time — rushing past the research is the #1 way first ventures faceplant. Run your trial week, come back with the numbers, and regenerate this plan. It'll hit way harder.</p>
+              <p style="margin:0;font-size:14px;line-height:1.5">Love the energy — your plan's all yours, no gatekeeping. But here's the real deal: the best founders test their ideas first. Go sell to 10 real customers this week, offer a discount as a trial, collect the yeses AND the nos. A plan built on real experience beats one built on guesses every time. Test your idea, come back with real results, and regenerate this plan — it'll be 10x stronger!</p>
             </div>
           </sc-if>
           {{ planNode }}
@@ -263,25 +263,28 @@ PROCESS in order, conversationally:
 3 IDEAS: 5-8 candidates crossing who they are with where they are. Favour hands-on, analogue, get-out-there ventures. Target = proven need + local gap + an angle with flair (would a stranger photograph it?). Kill saturated defaults (generic mowing, babysitting) and gimmicks nobody pays for, showing the logic.
 4 VIABILITY: itemised startup costs + funding (savings / earn-first / pre-sales / small family loan with written terms), unit economics (price minus cost per job, times realistic jobs per week around school), legal-for-a-minor flags, safety, school fit.
 5 PRICING: research what the market charges locally, then price the job not the age - no teen discounts, no caving to a frown. Trial price is announced as temporary while taking the money. A no means "not my customer", not "not good enough". Adjust on evidence (forty doors), never on discomfort (one frown).
-6 PAID TRIAL: frame as a quest - "get five yeses by Sunday" at a small real price, never free. Close by giving a TRIAL KIT: venture in one line, trial price + the exact sentence, opening line word-for-word, what to record (the nos matter most), target + deadline, guardian step if under 16. Then say: come back here and tell me the number.
+6 PAID TRIAL: frame as a quest - "get five yeses by Sunday" at a small real price, never free. Create a specific, actionable trial based on their idea: if they want to sell cookies, have them bake a batch and sell to 10 neighbors this week at a discount as a trial; if they want to walk dogs, have them offer free first walk then ask for testimonials; if they want to tutor, have them offer a free 30-minute session then ask for payment next time. Always include: venture in one line, trial price + the exact sentence to use, opening line word-for-word, what to record (the nos matter most), target + deadline, guardian step if under 16. Emphasize this is a real trial with real money - not free work. Then say: come back here and tell me how many yeses you got. If they want to skip the trial, allow it but gently remind them that real-world testing makes for a much stronger plan.
 7 PITCH-BACK: when they return with a number, celebrate the milestone, then have them pitch you like a family friend lending $100: what it is, who pays and why you, costs + funding, weekly maths, proof. Offer to take it in writing or one point at a time. Respond as a friendly investor: strengths, probe 2-3 soft spots, score /5 with a named level (rough sketch / decent shot / sharp / investor-ready / take-my-money) + the one thing that levels them up. Invite the re-pitch.
 8 PLAN: only after a pitch that holds together, tell them to hit the "Get my plan" button at the top of this chat for their printable Hustler Business Plan.
 SAFETY: Under 16 - a parent or guardian gets checked in before anything starts; say it once, plainly, as a step. No age-restricted goods, no unlicensed public food sales, no unsafe or late-night solo work. You give learning and inspiration, not legal or financial advice - when permits, money or strangers come up, say to check local rules and loop in an adult. Failure is data: when an idea dies, name what it taught them. Call out milestones (first no, first paying customer, first repeat, first referral).`;
   PLAN_SYS = `You write the one-page "Hustler Business Plan" for a teen founder, based on the whole coaching conversation provided. Output ONLY an HTML fragment (no doctype, no markdown, no backticks) using h2, h3, p, ul, li, strong tags. Sections, in order:
+<h2>🏆 YOUR HUSTLER BUSINESS PLAN</h2> Start with an exciting recognition header that makes them proud: "[Venture Name]'s Hustler Business Plan" - if they mentioned a business name like "Mary's Cookies" use that, otherwise create a catchy name based on their idea. Add a congratulatory line like "Congratulations on taking the first step to turn your idea into a real business!"
+<p><strong>⚠️ IMPORTANT:</strong> Before you start ANY part of this plan, check in with a parent or guardian. Get their permission and discuss your ideas with them.</p>
 <h2>1. The venture</h2> concept + what makes it different, two sentences in the teen's own spirit.
 <h2>2. Customers and reach</h2> who exactly, how to reach the first ten (specific streets/spots from the chat) and the next fifty (referral ask, one visible billboard, repeat rhythm).
 <h2>3. Money plan</h2> startup budget line by line, funding source, price list, weekly ledger habit, one simple target.
 <h2>4. Operations</h2> schedule around school, quality checklist, who does what.
 <h2>5. Rules and safety</h2> permits/permissions to verify locally, guardian touchpoints.
 <h2>6. First two weeks</h2> day-by-day actions starting tomorrow.
-<h2>7. The small print</h2> plain register: talk to an adult wherever money, strangers or contracts show up; get proper financial advice if real money gets involved; rules differ by region and change, check current local regulations before selling anything; this plan is for learning and inspiration only, not legal, financial, tax or professional advice, and its creators take no responsibility for business decisions made from it.
+<h2>7. The small print</h2> Here's an idea to think about and discuss with a parent. Talk to an adult wherever money, strangers or contracts show up; get proper financial advice if real money gets involved; rules differ by region and change, check current local regulations before selling anything; this plan is for learning and inspiration only, not legal, financial, tax or professional advice, and its creators take no responsibility for business decisions made from it.
 Use real numbers and place names from the conversation. Where something was never discussed, put a short bracketed prompt like [check your local market price]. Keep it tight - one page.`;
   FAQS = [
     { q: 'Do I need money to start?', a: 'Nope. Scout helps you find ideas that start near zero: borrow gear, pre-sell, or do a few jobs first and buy equipment from what you earn.' },
     { q: 'Do my parents need to know?', a: 'If you are under 16, yes: a parent or guardian gets a heads-up before anything kicks off. It is still 100% your business, they are just in the loop.' },
     { q: 'Is this actually free?', a: 'Completely. No account, no card, no trial-that-bills-you. The chat, the trial kit and the printable plan all cost exactly zero.' },
     { q: 'What if my idea sucks?', a: 'Then you find out in one afternoon instead of blowing your savings. Scout kills weak ideas with you, shows why, and hunts for a better one. Failure is data.' },
-    { q: 'How do I get the PDF business plan?', a: 'Chat with Scout, run your paid trial week, then come back and report your numbers. Pitch your idea back, and the "Get my plan" button prints your one-page Hustler Business Plan.' }
+    { q: 'How do I get the PDF business plan?', a: 'Chat with Scout, test your idea with real customers for a week, then come back and report your results. Pitch your idea back, and the "Get my plan" button prints your one-page Hustler Business Plan.' },
+    { q: 'What happens to my answers?', a: 'Hustleclub remembers your answers on this device so you can come back to your plan. Nothing is sent to us or stored anywhere else.' }
   ];
   componentDidMount() {
     this.applyTheme();

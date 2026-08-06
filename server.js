@@ -24,10 +24,15 @@ import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { getProvider, describeProviders, PROVIDER_IDS } from './llm-providers.js';
 import { resolveCredentials, readSetting, fingerprint, ENV_FILE_PATH, envFileExists } from './credentials.js';
-import { PURPOSES, geoNote, planGeoNote, currencyNote, buildPlanMessages } from './prompts.js';
+import { PURPOSES, geoNote, planGeoNote, currencyNote, buildPlanMessages, buildTrialMessages } from './prompts.js';
 import { GUARDRAILS_SYSTEM, screenInput, screenOutput } from './guardrails.js';
 import { sanitizePlan } from './sanitize-plan.js';
-import { createLimiter, clientIp } from './rate-limit.js';
+import { clientIp } from './rate-limit.js';
+import { makeCode, normaliseCode, CODE_SPACE } from './codes.js';
+import {
+  openSessions, sessionsEnabled, saveSession, claimCode, loadSession, sessionStats,
+  isReturningUser, markTrialComplete, markFeedbackGiven,
+} from './sessions.js';
 import { logUsage, USAGE_LOG_FILE, usageLogEnabled } from './usage-log.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -60,18 +65,7 @@ const REQUEST_TIMEOUT_MS = Number(readSetting('LLM_TIMEOUT_MS') || 60000);
 const MAX_MESSAGES = Number(readSetting('LLM_MAX_MESSAGES') || 120);
 const MAX_CHARS = Number(readSetting('LLM_MAX_CHARS') || 60000);
 
-// Rate limits. Chat is 60/day in the UI, so the daily ceiling leaves
-// headroom for a shared household/school IP without leaving the key open.
-const burstLimiter = createLimiter({
-  name: 'burst',
-  windowMs: 60_000,
-  max: Number(readSetting('RATE_LIMIT_PER_MINUTE') || 12),
-});
-const dailyLimiter = createLimiter({
-  name: 'daily',
-  windowMs: 24 * 60 * 60_000,
-  max: Number(readSetting('RATE_LIMIT_PER_DAY') || 200),
-});
+// Rate limiting removed - no restrictions
 
 // Behind nginx/Cloudflare every request looks like it came from the
 // proxy, which would put all visitors in one rate-limit bucket. Enable
@@ -266,12 +260,28 @@ app.use((req, res, next) => {
 // sanitises too, for instant feedback and as a second layer. They hold
 // no secrets, and the security guarantee comes from the SERVER running
 // them, not from the browser being unable to read them.
+// qr.js and sanitize-plan.js are deliberately ABSENT: the page imports
+// both in the browser. sessions.js and codes.js are here because the
+// word lists and the store are server business — publishing the lists
+// would hand an attacker the exact alphabet to enumerate codes with.
 const SERVER_ONLY = new Set([
   'server.js', 'credentials.js', 'llm-providers.js',
   'prompts.js', 'rate-limit.js', 'usage-log.js',
+  'sessions.js', 'codes.js',
   'package.json', 'package-lock.json',
   'Dockerfile', 'docker-compose.yml',
   'README.md', 'CREDENTIALS.md', 'SECURITY.md',
+  // The control panel (control-server.js) has its own Basic Auth wall,
+  // but this Dockerfile COPYs the whole project, so without an entry
+  // here these would be served as plain files by THIS process too —
+  // reachable at hustleclub.app/control.html with none of that auth.
+  // Same reasoning covers the other deploy configs below: each one
+  // names internal hosts, container names or volume paths that are
+  // nobody's business but this server's.
+  'control.html', 'control-server.js',
+  'Dockerfile.control', 'docker-compose.control.yml',
+  'docker-compose.vps.yml', 'dynamic.yml',
+  'stress_test.py', 'stress_test_no_limits.py',
 ]);
 
 app.use((req, res, next) => {
@@ -283,6 +293,243 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(__dirname, { dotfiles: 'deny' }));
+
+// ============================================================
+// SESSIONS — the come-back-later store
+//
+// Two routes, both deliberately dumb: they move a conversation in and
+// out under a three-word code and do nothing else. No accounts, no
+// device ids, no way to list codes, no way to search. The only way to
+// reach a session is to already know its code.
+//
+// ⚠️ WHY THERE IS NO DELETE ROUTE
+// A code is a bearer token, so an unauthenticated DELETE would let
+// anyone who guessed a code destroy a teen's work — strictly worse
+// than letting them read it. Expiry (sessions.js) is the erase path.
+// ============================================================
+
+openSessions();
+if (sessionsEnabled()) {
+  console.log(`[sessions] recall codes on, ${CODE_SPACE.toLocaleString('en')} possible codes`);
+}
+
+/** Shared shape check: a conversation the store is willing to hold. */
+function readConversation(body) {
+  const messages = Array.isArray(body.messages) ? body.messages : null;
+  if (!messages) return null;
+  if (messages.length > MAX_MESSAGES) return null;
+  const clean = [];
+  for (const m of messages) {
+    if (!m || (m.role !== 'user' && m.role !== 'assistant')) return null;
+    if (typeof m.content !== 'string') return null;
+    clean.push({ role: m.role, content: m.content });
+  }
+  return clean;
+}
+
+/**
+ * POST /api/session
+ *
+ * In:  { code?, messages: [{role, content}], stage? }
+ * Out: { code }
+ *
+ * With no code, mints one. With a code, overwrites that row — which
+ * means anyone holding a code can also overwrite it. That is the same
+ * exposure as reading it, and the alternative (a second secret) is a
+ * second thing for a teen to lose.
+ */
+app.post('/api/session', (req, res) => {
+  if (!sessionsEnabled()) {
+    return res.status(503).json({ error: 'sessions_off', message: 'Saving is switched off right now.' });
+  }
+  const ip = clientIp(req);
+  // Rate limiting removed - no restrictions
+
+  const body = req.body || {};
+  const messages = readConversation(body);
+  if (!messages) return res.status(400).json({ error: 'bad_request', message: 'messages[] is required' });
+  const stage = body.stage === 'trial' || body.stage === 'returned' ? body.stage : 'coaching';
+
+  // Updating an existing session.
+  if (body.code != null && body.code !== '') {
+    const code = normaliseCode(body.code);
+    if (!code) return res.status(400).json({ error: 'bad_code', message: 'That code is not one of ours.' });
+    if (!loadSession(code)) return res.status(404).json({ error: 'not_found', message: 'That code has expired.' });
+    saveSession(code, messages, stage);
+    return res.json({ code });
+  }
+
+  // Minting a new one. Collisions are vanishingly rare but a silent
+  // overwrite would destroy somebody else's chat, so claim-then-write.
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const code = makeCode(crypto.randomBytes);
+    if (claimCode(code)) {
+      saveSession(code, messages, stage);
+      return res.json({ code });
+    }
+  }
+  console.error('[sessions] could not find a free code in 8 attempts — the space may be filling up');
+  return res.status(503).json({ error: 'no_code', message: 'Could not save that right now.' });
+});
+
+/**
+ * GET /api/session/:code
+ *
+ * Out: { messages, stage }
+ *
+ * The limiter is checked BEFORE the code is even validated, so a
+ * scan burns its allowance on malformed guesses too. A wrong code and
+ * an expired one return the identical 404 — telling them apart would
+ * let a scanner map which codes exist.
+ */
+app.get('/api/session/:code', (req, res) => {
+  if (!sessionsEnabled()) {
+    return res.status(503).json({ error: 'sessions_off', message: 'Saving is switched off right now.' });
+  }
+  const ip = clientIp(req);
+  // Rate limiting removed - no restrictions
+
+  const code = normaliseCode(req.params.code);
+  if (!code) return res.status(404).json({ error: 'not_found', message: "We couldn't find that code." });
+  const session = loadSession(code);
+  if (!session) return res.status(404).json({ error: 'not_found', message: "We couldn't find that code." });
+
+  logUsage({ ip, event: 'session-lookup', status: 'ok' });
+  return res.json({ messages: session.messages, stage: session.stage });
+});
+
+/**
+ * POST /api/session/:code/complete-trial
+ * Mark a session as having completed the trial and generate a return code for feedback entry.
+ */
+app.post('/api/session/:code/complete-trial', (req, res) => {
+  if (!sessionsEnabled()) {
+    return res.status(503).json({ error: 'sessions_off', message: 'Saving is switched off right now.' });
+  }
+  
+  const ip = clientIp(req);
+  // Rate limiting removed - no restrictions
+
+  const code = normaliseCode(req.params.code);
+  if (!code) return res.status(400).json({ error: 'bad_code', message: 'That code is not one of ours.' });
+  
+  const session = loadSession(code);
+  if (!session) return res.status(404).json({ error: 'not_found', message: 'That code has expired.' });
+  
+  // Use provided return code or generate a new one
+  const returnCode = req.body.returnCode && normaliseCode(req.body.returnCode) || makeCode(crypto.randomBytes);
+  
+  // Mark the session as trial complete
+  const success = markTrialComplete(code, returnCode);
+  if (!success) {
+    return res.status(500).json({ error: 'server_error', message: 'Could not update session.' });
+  }
+  
+  logUsage({ ip, event: 'trial-complete', status: 'ok' });
+  return res.json({ 
+    success: true, 
+    returnCode,
+    message: 'Trial marked as complete. User can return with this code to enter feedback.'
+  });
+});
+
+/**
+ * POST /api/session/:code/feedback
+ * Mark a session as having received feedback, allowing plan generation.
+ */
+app.post('/api/session/:code/feedback', (req, res) => {
+  if (!sessionsEnabled()) {
+    return res.status(503).json({ error: 'sessions_off', message: 'Saving is switched off right now.' });
+  }
+  
+  const ip = clientIp(req);
+  // Rate limiting removed - no restrictions
+
+  const code = normaliseCode(req.params.code);
+  if (!code) return res.status(400).json({ error: 'bad_code', message: 'That code is not one of ours.' });
+  
+  const session = loadSession(code);
+  if (!session) return res.status(404).json({ error: 'not_found', message: 'That code has expired.' });
+  
+  // Mark the session as having received feedback
+  const success = markFeedbackGiven(code);
+  if (!success) {
+    return res.status(500).json({ error: 'server_error', message: 'Could not update session.' });
+  }
+  
+  logUsage({ ip, event: 'feedback-given', status: 'ok' });
+  return res.json({ 
+    success: true, 
+    message: 'Feedback recorded. User can now generate their business plan.'
+  });
+});
+
+/**
+ * GET /api/session/:code/status
+ * Check if a session is eligible for plan generation (returning user status).
+ */
+app.get('/api/session/:code/status', (req, res) => {
+  if (!sessionsEnabled()) {
+    return res.status(503).json({ error: 'sessions_off', message: 'Saving is switched off right now.' });
+  }
+  
+  const ip = clientIp(req);
+  // Rate limiting removed - no restrictions
+
+  const code = normaliseCode(req.params.code);
+  if (!code) return res.status(404).json({ error: 'not_found', message: "We couldn't find that code." });
+  
+  const session = loadSession(code);
+  if (!session) return res.status(404).json({ error: 'not_found', message: "We couldn't find that code." });
+
+  logUsage({ ip, event: 'session-status', status: 'ok' });
+  return res.json({
+    code,
+    stage: session.stage,
+    trialComplete: session.trialComplete,
+    feedbackGiven: session.feedbackGiven,
+    returnCode: session.returnCode,
+    isReturningUser: session.trialComplete && !session.feedbackGiven
+  });
+});
+
+/**
+ * GET /api/qr/:code
+ * Generate a QR code URL for a return code. Returns a simple JSON with the URL.
+ */
+app.get('/api/qr/:code', (req, res) => {
+  const code = normaliseCode(req.params.code);
+  if (!code) return res.status(400).json({ error: 'bad_code', message: 'That code is not one of ours.' });
+  
+  // Generate the full URL for the QR code
+  const baseUrl = req.protocol + '://' + req.get('host');
+  const returnUrl = `${baseUrl}/?returnCode=${code}`;
+  
+  return res.json({
+    code,
+    qrUrl: returnUrl,
+    message: `Scan this QR code or visit ${returnUrl} to return and enter your trial feedback.`
+  });
+});
+
+/**
+ * GET /api/qr/session/:code
+ * Generate a QR code URL for a session code (to continue chat). Returns a simple JSON with the URL.
+ */
+app.get('/api/qr/session/:code', (req, res) => {
+  const code = normaliseCode(req.params.code);
+  if (!code) return res.status(400).json({ error: 'bad_code', message: 'That code is not one of ours.' });
+  
+  // Generate the full URL for the QR code
+  const baseUrl = req.protocol + '://' + req.get('host');
+  const recallUrl = `${baseUrl}/?c=${encodeURIComponent(code)}`;
+  
+  return res.json({
+    code,
+    qrUrl: recallUrl,
+    message: `Scan this QR code or visit ${recallUrl} to continue your chat session.`
+  });
+});
 
 /**
  * POST /api/chat
@@ -307,24 +554,16 @@ app.post('/api/chat', async (req, res) => {
   const geo = body.geo && typeof body.geo === 'object' ? body.geo : {};
   const base = { ip, geo, timezone: body.timezone };
 
-  // --- 1. Rate limit BEFORE any work, so a flood costs us nothing ---
-  for (const limiter of [burstLimiter, dailyLimiter]) {
-    const verdict = limiter.take(ip);
-    if (!verdict.allowed) {
-      logUsage({ ...base, event: body.purpose, status: 'rate-limited', ms: Date.now() - started });
-      res.set('Retry-After', String(verdict.retryAfterSec));
-      return res.status(429).json({
-        error: 'rate_limited',
-        message: "You've been going fast — give it a minute and try again.",
-      });
-    }
-  }
+  // --- 1. Rate limiting removed - no restrictions ---
+  // Check if this is a returning user with a valid session code
+  const sessionCode = body.sessionCode || null;
+  const isReturning = sessionCode && isReturningUser(sessionCode);
 
   // --- 2. Validate the shape ---
   const purpose = String(body.purpose || 'chat');
   const spec = PURPOSES[purpose];
   if (!spec) {
-    return res.status(400).json({ error: 'bad_request', message: 'purpose must be "chat" or "plan"' });
+    return res.status(400).json({ error: 'bad_request', message: 'purpose must be "chat", "trial" or "plan"' });
   }
 
   const messages = Array.isArray(body.messages) ? body.messages : null;
@@ -387,10 +626,15 @@ app.post('/api/chat', async (req, res) => {
   // Both purposes get location + currency context. The plan used to get
   // neither, which is how a São Paulo plan ended up quoting "$80 saved"
   // next to "R$30 tune-up".
-  const location = purpose === 'plan' ? planGeoNote(geo) : geoNote(geo);
+  // geoNote asks the model to OFFER cities as options — right for chat,
+  // wrong for a plan or a trial brief, which need the location stated as
+  // settled fact so prices and place names come out local.
+  const location = purpose === 'chat' ? geoNote(geo) : planGeoNote(geo);
   const canonical = {
     system: spec.system + location + currencyNote(geo) + GUARDRAILS_SYSTEM,
-    messages: purpose === 'plan' ? buildPlanMessages(clean) : clean,
+    messages: purpose === 'plan' ? buildPlanMessages(clean)
+      : purpose === 'trial' ? buildTrialMessages(clean)
+        : clean,
     max_tokens: config.reasoningEffort ? spec.reasoningMaxTokens : spec.maxTokens,
   };
 
@@ -667,12 +911,12 @@ function printStartupReport(config, problem) {
 }
 
 function printSecurityReport() {
-  console.log(`  Rate limit : ${burstLimiter.max}/min and ${dailyLimiter.max}/day per IP`);
+  console.log(`  Rate limit : removed - no restrictions`);
   console.log(`  Usage log  : ${usageLogEnabled() ? USAGE_LOG_FILE : 'disabled (USAGE_LOG=off)'}`);
   console.log(`  Admin API  : ${ADMIN_TOKEN ? 'token required' : 'loopback only (set LLM_ADMIN_TOKEN for remote access)'}`);
   if (!TRUST_PROXY) {
-    console.log('  ⚠  TRUST_PROXY is not set. If nginx/Cloudflare sits in front of');
-    console.log('     this app, every visitor shares one rate-limit bucket. See .env.example.');
+    console.log('  ℹ  TRUST_PROXY is not set. If nginx/Cloudflare sits in front of');
+    console.log('     this app, client IP detection may not work correctly. See .env.example.');
   }
   console.log('─'.repeat(62));
 }

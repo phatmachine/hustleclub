@@ -54,13 +54,33 @@ It runs on the server **and** in the page. Both, deliberately.
 3. **Terminate TLS at the proxy** and add HSTS there. This app speaks plain HTTP.
 4. **Set `LLM_ADMIN_TOKEN`** if you want `/api/llm/status` from anywhere but the box itself.
 5. **Mount `logs/`** as a volume, or the usage log vanishes on rebuild.
-6. **Rebuild periodically** so base-image security patches land.
+6. **Mount `data/`** as a volume, or every recall code ever issued dies on the
+   next rebuild. Both compose files do this; a hand-rolled `docker run` must too.
+7. **Rebuild periodically** so base-image security patches land.
 
 ## Privacy
 
 The audience is minors, so:
 
-- **No conversation content is ever logged.** [usage-log.js](usage-log.js) records timestamps, region, and counts — never messages, ideas, or plans.
+- **Conversations ARE stored, under a three-word recall code.** This changed when
+  come-back-later codes landed. Until then nothing left the browser, which meant a
+  shared device showed one teen another teen's chat, and a plan was trapped on the
+  phone that made it. [sessions.js](sessions.js) holds the trade in code, not in
+  prose: rows expire after `SESSION_RETENTION_DAYS` (default 90) and are swept
+  hourly; there is no account, email or device id attached; and there is no route
+  that lists or searches sessions — a code is the only way in.
+- **A recall code is a bearer token, not a password.** 884,736 combinations is
+  sayable down a phone and enumerable by a script, so the control is the lookup
+  limiter (`RATE_LIMIT_CODE_LOOKUPS`, default 20/hour/IP), not the code length.
+  Raising that limit hands out other teens' conversations. This is only acceptable
+  because the guardrails keep surnames, addresses, schools and phone numbers out of
+  the conversation in the first place — keep it that way.
+- **There is deliberately no delete route.** An unauthenticated DELETE would let
+  anyone who guessed a code destroy a teen's work, which is worse than reading it.
+  Expiry is the erase path.
+- **No conversation content is ever logged.** [usage-log.js](usage-log.js) records
+  timestamps, region, and counts — never messages, ideas, or plans. The session
+  store is a separate thing from the log, and neither feeds the other.
 - **IPs are hashed** into a short visitor id by default. Enough to count visitors and spot abuse; not a stored IP address. `USAGE_LOG_IP=full` opts out — only with a policy that covers it.
 - The salt is random per restart, so ids are not comparable across restarts. `USAGE_LOG_SALT` makes them stable, which enables long-term tracking — a deliberate trade-off.
 

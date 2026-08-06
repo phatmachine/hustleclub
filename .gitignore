@@ -9,3 +9,9 @@ node_modules/
 
 # Usage log: contains visitor metadata (region, timestamps).
 logs/
+
+# Session store: holds teens' actual conversations. Never commit it.
+data/
+*.db
+*.db-wal
+*.db-shm

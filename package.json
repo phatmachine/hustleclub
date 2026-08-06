@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "check": "node server.js --check",
-    "test": "node test/security.mjs"
+    "test": "node test/security.mjs && node test/qr.mjs"
   },
   "dependencies": {
     "express": "^4.19.2"

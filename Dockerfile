@@ -23,9 +23,14 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY . .
 
-# The usage log is written at runtime; make sure the unprivileged user
-# owns the directory before we drop root.
-RUN mkdir -p /app/logs && chown -R node:node /app/logs
+# The usage log and the session store are written at runtime; make sure
+# the unprivileged user owns both directories before we drop root.
+#
+# ⚠️ /app/data MUST BE MOUNTED AS A VOLUME (see docker-compose.yml).
+# Unmounted it lives in the container's writable layer, so every
+# rebuild silently throws away every teen's recall code — their hustle
+# would simply stop existing on your next deploy.
+RUN mkdir -p /app/logs /app/data && chown -R node:node /app/logs /app/data
 
 # Drop root. Without this the app runs as uid 0 inside the container,
 # so any code-execution bug starts with root in that namespace.
