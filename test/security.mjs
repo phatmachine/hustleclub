@@ -361,6 +361,17 @@ async function main() {
     check('does NOT contain conversation content', !/sell vapes|fuck you/i.test(log));
     check('does NOT contain a raw IP', !/127\.0\.0\.1|::1/.test(log));
 
+    // A successful plan is the one deliberate exception to "no content in
+    // the log" (see the privacy note at the top of usage-log.js) — this
+    // asserts that trade-off stays a visible, intentional diff if it ever
+    // changes, in either direction.
+    const planReq = await post({ purpose: 'plan', messages: [{ role: 'user', content: 'I want to mow lawns' }] });
+    check('plan request succeeds', planReq.status === 200, `got ${planReq.status}`);
+    await new Promise((r) => setTimeout(r, 300));
+    const planLog = fs.existsSync(logFile) ? fs.readFileSync(logFile, 'utf8') : '';
+    check('a successful plan event logs the full plan text',
+      /event=plan\s+status=ok/.test(planLog) && /plan="/.test(planLog));
+
     fs.rmSync(logFile, { force: true });
   } finally {
     server.kill();

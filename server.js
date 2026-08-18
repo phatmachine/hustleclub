@@ -768,6 +768,10 @@ app.post('/api/chat', async (req, res) => {
       ...base, event: purpose, status: 'ok',
       provider: config.provider.id, model: outcome.result.model || config.model,
       usage: outcome.result.usage, ms: Date.now() - started,
+      // Full plan text, logged in full only here — a successful plan
+      // generation, after sanitizePlan()/screenOutput() above. See the
+      // privacy note at the top of usage-log.js for what this trades off.
+      ...(purpose === 'plan' ? { plan: text } : {}),
     });
 
     return res.json({

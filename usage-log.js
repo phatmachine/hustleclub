@@ -13,9 +13,16 @@
 //
 // ⚠️ PRIVACY — this app is used by 14-18 year olds. Two deliberate rules:
 //
-//   1. NO CONVERSATION CONTENT is ever written here. Not the messages,
-//      not the business idea, not the plan. Those can contain a minor's
-//      first name and suburb. Only counts and metadata are logged.
+//   1. CHAT MESSAGES are never written here — only the generated PLAN
+//      is (see the `plan=` field below), and only once it has passed
+//      sanitizePlan() and screenOutput(), same as what's shown to the
+//      teen. This is a deliberate operator choice to allow content
+//      review from this log; it means a plan's business idea, and
+//      anything the teen put in it, now lives in a file with no
+//      expiry (only the size-based rotation below) and is readable by
+//      anyone holding ADMIN_PASSWORD via the control panel. The
+//      session store (sessions.js) is still the narrower, expiring
+//      copy — prefer it over this log when only one plan is needed.
 //
 //   2. IP ADDRESSES ARE HASHED by default. You still get a stable
 //      `visitor=` id — enough to count unique visitors and spot one
@@ -49,9 +56,11 @@ const MAX_BYTES = Number(process.env.USAGE_LOG_MAX_BYTES || 10 * 1024 * 1024); /
 
 const HEADER = [
   '# Hustle Club usage log',
-  '# One line per AI request. No conversation content is recorded.',
-  '# Fields: <ISO-8601 UTC timestamp>  event=  status=  region=  tz=  visitor=  provider=  model=  tokens=in/out  ms=',
+  '# One line per AI request.',
+  '# Fields: <ISO-8601 UTC timestamp>  event=  status=  region=  tz=  visitor=  provider=  model=  tokens=in/out  ms=  [plan=]',
   '# visitor= is a salted hash of the IP, not the IP itself (see usage-log.js).',
+  '# plan= is present only on status=ok plan events: the full sanitized plan',
+  '# text, newlines escaped to \\n so each event stays on one physical line.',
   '',
 ].join('\n');
 
@@ -94,6 +103,24 @@ function quote(value) {
   return '"' + (s || '-') + '"';
 }
 
+// plan= carries far more text than any other field (a full generated
+// plan, not a short metadata string), so it gets its own quoting: no
+// 80-char cap, and real line breaks are escaped to a literal "\n"
+// rather than collapsed to a space, so the plan stays readable while
+// the log keeps its one-line-per-event shape — every parser here and
+// in control.html relies on that. MAX_PLAN_CHARS is just a backstop
+// against a pathological model response ballooning the log file.
+const MAX_PLAN_CHARS = 20000;
+function quotePlan(value) {
+  const s = String(value == null ? '' : value)
+    .replace(/\r\n?/g, '\n')
+    .replace(/\n/g, '\\n')
+    .replace(/"/g, "'")
+    .trim()
+    .slice(0, MAX_PLAN_CHARS);
+  return '"' + (s || '-') + '"';
+}
+
 function bare(value) {
   return String(value == null ? '-' : value).replace(/[^\w.:/-]/g, '') || '-';
 }
@@ -111,6 +138,9 @@ function bare(value) {
  * @param {string} [e.model]
  * @param {object} [e.usage]   { input, output } token counts
  * @param {number} [e.ms]      request duration
+ * @param {string} [e.plan]    full sanitized plan text — only ever pass
+ *                             this for a successful (status='ok') plan
+ *                             event; see the privacy note above.
  */
 export function logUsage(e) {
   if (!ENABLED) return;
@@ -131,7 +161,9 @@ export function logUsage(e) {
     'model=' + bare(e.model),
     'tokens=' + bare(tokens),
     'ms=' + bare(e.ms),
-  ].join('  ') + '\n';
+  ].join('  ')
+    + (e.plan ? '  plan=' + quotePlan(e.plan) : '')
+    + '\n';
 
   // Never let logging break a user's chat: swallow errors, warn once.
   queue = queue

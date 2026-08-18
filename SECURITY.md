@@ -78,9 +78,15 @@ The audience is minors, so:
 - **There is deliberately no delete route.** An unauthenticated DELETE would let
   anyone who guessed a code destroy a teen's work, which is worse than reading it.
   Expiry is the erase path.
-- **No conversation content is ever logged.** [usage-log.js](usage-log.js) records
-  timestamps, region, and counts — never messages, ideas, or plans. The session
-  store is a separate thing from the log, and neither feeds the other.
+- **Chat messages are never logged.** [usage-log.js](usage-log.js) records
+  timestamps, region, and counts for every event. **A successfully generated
+  plan is the one exception** — its full sanitized text is written to the log
+  too, for content review from the control panel. That log has no expiry
+  (only size-based rotation, see below), unlike the session store, so this
+  is a real trade-off: a plan's business idea and anything the teen put in it
+  now lives somewhere any ADMIN_PASSWORD holder can read, indefinitely, not
+  just the person with the recall code. The session store remains the
+  narrower, expiring copy — prefer it when only one plan is needed.
 - **IPs are hashed** into a short visitor id by default. Enough to count visitors and spot abuse; not a stored IP address. `USAGE_LOG_IP=full` opts out — only with a policy that covers it.
 - The salt is random per restart, so ids are not comparable across restarts. `USAGE_LOG_SALT` makes them stable, which enables long-term tracking — a deliberate trade-off.
 

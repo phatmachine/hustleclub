@@ -160,8 +160,8 @@
                                 <tr class="border-b-2 border-gray-200">
                                     <th class="text-left p-3 font-semibold text-gray-700">Timestamp</th>
                                     <th class="text-left p-3 font-semibold text-gray-700">Type</th>
-                                    <th class="text-left p-3 font-semibold text-gray-700">IP Address</th>
-                                    <th class="text-left p-3 font-semibold text-gray-700">User Agent</th>
+                                    <th class="text-left p-3 font-semibold text-gray-700">Region</th>
+                                    <th class="text-left p-3 font-semibold text-gray-700">Visitor</th>
                                     <th class="text-left p-3 font-semibold text-gray-700">Details</th>
                                 </tr>
                             </thead>
@@ -527,39 +527,62 @@
             });
         }
         
+        // usage-log.js writes one line per event as:
+        //   <ISO timestamp>  key=value  key="quoted value"  ...
+        // Quoted values never contain a literal '"' (usage-log.js swaps
+        // it for "'" before writing), so a non-greedy match between
+        // quotes is safe. plan= is the one field that can contain
+        // newlines, escaped to a literal "\n" so the file stays one
+        // line per event — unescape it back for display.
         function parseLogs(logText) {
             if (!logText.trim()) return [];
-            
+
             const lines = logText.split('\n');
             const logs = [];
-            
+            const fieldRe = /(\w+)=(?:"([^"]*)"|(\S+))/g;
+
             for (const line of lines) {
-                if (!line.trim()) continue;
-                
-                try {
-                    // Try to parse as JSON
-                    const logEntry = JSON.parse(line);
-                    logs.push(logEntry);
-                } catch (e) {
-                    // If not JSON, create a basic log entry
-                    const parts = line.split('\t');
-                    if (parts.length >= 3) {
-                        logs.push({
-                            timestamp: parts[0],
-                            type: parts[1],
-                            details: parts.slice(2).join('\t')
-                        });
-                    } else {
-                        logs.push({
-                            timestamp: new Date().toISOString(),
-                            type: 'unknown',
-                            details: line
-                        });
-                    }
+                if (!line.trim() || line.startsWith('#')) continue;
+
+                const tsMatch = line.match(/^(\S+)\s+(.*)$/);
+                if (!tsMatch) continue;
+
+                const fields = {};
+                fieldRe.lastIndex = 0;
+                let m;
+                while ((m = fieldRe.exec(tsMatch[2]))) {
+                    fields[m[1]] = m[2] !== undefined ? m[2] : m[3];
                 }
+
+                const val = (k) => (fields[k] && fields[k] !== '-') ? fields[k] : null;
+
+                logs.push({
+                    timestamp: tsMatch[1],
+                    type: fields.event || 'unknown',
+                    status: val('status'),
+                    region: val('region'),
+                    tz: val('tz'),
+                    visitor: val('visitor'),
+                    provider: val('provider'),
+                    model: val('model'),
+                    tokens: val('tokens'),
+                    ms: val('ms'),
+                    plan: val('plan') ? fields.plan.replace(/\\n/g, '\n') : null,
+                });
             }
-            
+
             return logs;
+        }
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
+        function togglePlan(i) {
+            const row = document.getElementById('plan-row-' + i);
+            if (row) row.classList.toggle('hidden');
         }
         
         // Filter and search functionality
@@ -605,8 +628,8 @@
             const chatRequests = filteredLogs.filter(log => log.type === 'chat').length;
             const planRequests = filteredLogs.filter(log => log.type === 'plan').length;
             
-            // Count unique IPs
-            const uniqueIPs = new Set(filteredLogs.map(log => log.ip).filter(ip => ip));
+            // Count unique visitors (a salted hash of IP, not the IP itself)
+            const uniqueIPs = new Set(filteredLogs.map(log => log.visitor).filter(Boolean));
             const uniqueVisitors = uniqueIPs.size;
             
             document.getElementById('total-entries').textContent = totalEntries;
@@ -628,13 +651,27 @@
             }
             
             let html = '';
-            for (const log of pageLogs) {
+            pageLogs.forEach((log, i) => {
                 const timestamp = new Date(log.timestamp).toLocaleString();
                 const type = log.type || 'unknown';
-                const ip = log.ip || 'N/A';
-                const userAgent = log.userAgent || 'N/A';
-                const details = log.details || JSON.stringify(log);
-                
+                const region = escapeHtml(log.region || 'N/A');
+                const visitor = escapeHtml(log.visitor || 'N/A');
+
+                const detailParts = [
+                    log.status,
+                    log.provider,
+                    log.model,
+                    log.tokens ? log.tokens + ' tok' : null,
+                    log.ms ? log.ms + 'ms' : null,
+                ].filter(Boolean).map(escapeHtml);
+                let details = detailParts.join(' · ') || '—';
+                // log.plan is already sanitizePlan()'d server-side before it's
+                // ever written to the log, so it's safe to inject as HTML here
+                // the same way the app itself renders a plan for the teen.
+                if (log.plan) {
+                    details += ` <button type="button" class="text-purple-600 underline text-xs ml-1" onclick="togglePlan(${i})">View plan</button>`;
+                }
+
                 html += `
                     <tr class="border-b border-gray-200 hover:bg-gray-50">
                         <td class="p-3 text-sm text-gray-700">${timestamp}</td>
@@ -643,13 +680,20 @@
                                 ${type}
                             </span>
                         </td>
-                        <td class="p-3 text-sm text-gray-600 font-mono">${ip}</td>
-                        <td class="p-3 text-sm text-gray-600 truncate max-w-xs">${userAgent}</td>
+                        <td class="p-3 text-sm text-gray-600">${region}</td>
+                        <td class="p-3 text-sm text-gray-600 font-mono">${visitor}</td>
                         <td class="p-3 text-sm text-gray-800">${details}</td>
                     </tr>
                 `;
-            }
-            
+                if (log.plan) {
+                    html += `
+                        <tr id="plan-row-${i}" class="hidden bg-purple-50">
+                            <td colspan="5" class="p-4 text-sm text-gray-800">${log.plan}</td>
+                        </tr>
+                    `;
+                }
+            });
+
             logsContent.innerHTML = html;
         }
         
