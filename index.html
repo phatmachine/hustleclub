@@ -430,8 +430,14 @@ button{font-family:'Space Grotesk',sans-serif}
           <div style="width:30px;height:30px;background:var(--y);border:3px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-size:15px" aria-hidden="true">✶</div>
           <span style="font-family:'Bungee',sans-serif;font-size:16px;color:#fff;text-shadow:2px 2px 0 var(--ink)">SCOUT</span>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
           <button type="button" id="btn-plan" class="btn-plan" hidden>Get my plan</button>
+          <!-- Chat's own code entry: #hero-start (and the code button inside
+               it) hides for the rest of the session the moment a chat
+               starts, and a restored conversation starts already-hidden on
+               load — so without this, the code modal is only reachable
+               before the very first message is ever sent. -->
+          <button type="button" id="btn-code-chat" class="btn-reset">I've got a code ✶</button>
           <button type="button" id="btn-reset" class="btn-reset">Start over</button>
         </div>
       </div>
@@ -2026,6 +2032,7 @@ button{font-family:'Space Grotesk',sans-serif}
     $('chat-input').addEventListener('keydown', enterKey(function () { send(grabInput('chat-input')); }));
     $('chip-free').addEventListener('click', function () { pickChip('Type my own answer'); });
     $('btn-code').addEventListener('click', function () { showCodeError(''); openCodeModal(); });
+    $('btn-code-chat').addEventListener('click', function () { showCodeError(''); openCodeModal(); });
     $('code-cancel').addEventListener('click', closeCodeModal);
     $('code-go').addEventListener('click', submitCode);
     $('code-input').addEventListener('keydown', enterKey(submitCode));
