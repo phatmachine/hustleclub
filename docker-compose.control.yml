@@ -16,11 +16,20 @@ services:
       - .env
     environment:
       - ADMIN_PORT=3002
+    # Dockerfile.control already COPYs the whole repo in at build time,
+    # so control.html/control-server.js/stress_test_no_limits.py don't
+    # need a runtime bind mount — and on deploy hosts that build from a
+    # throwaway clone rather than keeping a live checkout in the project
+    # directory, those file-level mounts have nothing to point at, which
+    # fails the whole container ("not a directory" mount errors).
+    #
+    # logs/ is an absolute path, not ./logs: this service deploys as its
+    # own Compose project, in its own directory, separate from the main
+    # hustleclub app's. A relative ./logs would mount an empty folder of
+    # its own instead of the usage.log the main app actually writes. It
+    # has to point at that app's real logs directory on the host.
     volumes:
-      - ./logs:/app/logs:ro
-      - ./stress_test_no_limits.py:/app/stress_test_no_limits.py:ro
-      - ./control.html:/app/control.html:ro
-      - ./control-server.js:/app/control-server.js:ro
+      - /home/hustleclub/logs:/app/logs:ro
     networks:
       - traefik-proxy
     labels:
