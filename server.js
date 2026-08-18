@@ -282,6 +282,14 @@ const SERVER_ONLY = new Set([
   'Dockerfile.control', 'docker-compose.control.yml',
   'docker-compose.vps.yml', 'dynamic.yml',
   'stress_test.py', 'stress_test_no_limits.py',
+  // Pre-dates this repo's git history — a leftover build artifact that
+  // was never checked in but still lives in the deploy directory, so
+  // `COPY . .` keeps baking it into every image. It called same-origin
+  // /api/admin/* routes that were never implemented here (only in
+  // control-server.js), so its login always failed — but the markup
+  // itself was served to anyone, unauthenticated. control.html/
+  // control-server.js are the real, replacement admin panel.
+  'admin.html',
 ]);
 
 app.use((req, res, next) => {
