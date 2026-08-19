@@ -125,6 +125,8 @@ button{font-family:'Space Grotesk',sans-serif}
 .ms-row.is-say{background:var(--t)}
 .ms-row.is-say .ms-key{color:#fff;text-shadow:1px 1px 0 var(--ink)}
 .ms-row.is-say .ms-val{color:#fff;font-weight:700}
+.ms-actions{padding:0 14px 16px;display:flex;gap:10px;flex-wrap:wrap}
+.ms-actions button{flex:1;min-width:150px;text-align:center;font-size:14px}
 
 /* The recall panel — code display with download button */
 .qr-panel{background:var(--p);border:3px solid var(--ink);border-radius:20px;box-shadow:6px 6px 0 var(--ink);
@@ -1315,14 +1317,20 @@ button{font-family:'Space Grotesk',sans-serif}
   function render() {
     var v = visibleMessages();
 
-    // Only the most recent trial brief counts as "the survey is done" —
-    // an older one still sitting in history (say, a returning user
-    // answers more questions and earns a second mission) must not grow
-    // its own copy of the QR/code panel alongside it.
-    var lastTrialBrief = null;
-    v.list.forEach(function (m) {
-      if (m.role === 'assistant' && isTrialBrief(m.content)) lastTrialBrief = m;
-    });
+    // isFinal must mean "the conversation is CURRENTLY sitting on a
+    // trial brief" — only the last message, same as v.onMission just
+    // above. The previous version scanned the WHOLE history and kept
+    // whichever trial brief it found regardless of what came after it,
+    // so appending any later message (the WELCOME_BACK that
+    // beginTrialReport() appends, in particular) never cleared it —
+    // "I ran my trial" looked like it worked but the chat view it's
+    // supposed to reveal stayed hidden forever, because a trial brief
+    // was still sitting somewhere in the now-longer history. An older
+    // trial brief still gets shown, just as an inline mission card in
+    // the normal chat-scroll loop below (see the isTrialBrief branch
+    // there) rather than as this standalone final screen — so a second
+    // mission still doesn't grow a duplicate QR panel.
+    var lastTrialBrief = v.onMission ? state.messages[state.messages.length - 1] : null;
     var isFinal = Boolean(lastTrialBrief && sessionCode);
 
     $('hero-start').hidden = state.started;
@@ -1482,7 +1490,34 @@ button{font-family:'Space Grotesk',sans-serif}
         card.appendChild(recallPanel(sessionCode));
       }
     }
+    card.appendChild(missionActions());
     return card;
+  }
+
+  // render()'s isFinal branch hides the whole #chat-card — header,
+  // chip-panel, everything — for as long as a mission card is the
+  // thing on screen (see the comment there). The mission brief's own
+  // chips ('I ran my trial' / 'Get my plan', set in visibleMessages())
+  // are computed but live inside that hidden chip-panel, so they were
+  // never actually clickable. These call the exact same handlers
+  // pickChip() would have (beginTrialReport / makePlan) so the plan is
+  // reachable from the one screen whose whole job is to hand it out.
+  function missionActions() {
+    var row = el('div', 'ms-actions');
+
+    var ranIt = el('button', 'plan-btn is-close');
+    ranIt.type = 'button';
+    ranIt.textContent = 'I ran my trial';
+    ranIt.addEventListener('click', function () { beginTrialReport(state.messages); });
+    row.appendChild(ranIt);
+
+    var getPlan = el('button', 'plan-btn is-print');
+    getPlan.type = 'button';
+    getPlan.textContent = 'Get my plan';
+    getPlan.addEventListener('click', makePlan);
+    row.appendChild(getPlan);
+
+    return row;
   }
 
   /** The bright panel that carries the code home: camera icon + code + message. */
