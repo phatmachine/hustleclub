@@ -44,6 +44,11 @@ a{color:var(--v);text-decoration-thickness:2px}a:hover{color:var(--p)}
    prototype — a directive its runtime applied. Browsers ignore unknown
    attributes, so the hover states only exist once they are real CSS. */
 button{font-family:'Space Grotesk',sans-serif}
+button:disabled{opacity:.55;cursor:default;transform:none!important}
+.btn-dots{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}
+.btn-dots i{width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;animation:blink 1.2s infinite}
+.btn-dots i:nth-child(2){animation-delay:.2s}
+.btn-dots i:nth-child(3){animation-delay:.4s}
 .btn-go{border:none;border-left:3px solid var(--ink);background:var(--p);color:#fff;font-family:'Bungee',sans-serif;font-size:18px;padding:0 32px;cursor:pointer}
 .btn-go:hover{background:var(--v)}
 .chip{background:#fff;border:3px solid var(--ink);border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);color:var(--ink)}
@@ -645,7 +650,11 @@ button{font-family:'Space Grotesk',sans-serif}
     trialSuggested: false, trialCompleted: false,
     // Set when the teen chooses to type instead of tapping an option.
     // Clears on the next reply, so the next question is tap-first again.
-    freeText: false
+    freeText: false,
+    // Separate from `busy`: busy also goes true for an ordinary chat
+    // send, and the plan buttons must not claim "generating your plan"
+    // while Scout is just answering a normal message.
+    planBusy: false
   };
 
   var geo = {};
@@ -1422,7 +1431,24 @@ button{font-family:'Space Grotesk',sans-serif}
 
     // Show plan button after 5 user questions — and always to someone
     // who came back to report, since the plan is why they returned.
-    $('btn-plan').hidden = !returned && userQuestionCount < 5;
+    var btnPlan = $('btn-plan');
+    btnPlan.hidden = !returned && userQuestionCount < 5;
+    // Disabled for ANY busy state (avoids a dead click while a normal
+    // chat reply is in flight too), but the "generating" label/dots
+    // only show for planBusy specifically — busy alone would falsely
+    // claim a plan is generating during an ordinary chat send.
+    btnPlan.disabled = state.busy;
+    btnPlan.textContent = '';
+    if (state.planBusy) {
+      btnPlan.appendChild(document.createTextNode('Generating your plan'));
+      var hdots = el('span', 'btn-dots');
+      hdots.appendChild(el('i'));
+      hdots.appendChild(el('i'));
+      hdots.appendChild(el('i'));
+      btnPlan.appendChild(hdots);
+    } else {
+      btnPlan.textContent = 'Get my plan';
+    }
 
     $('plan-modal').hidden = !state.planOpen;
     $('rush-note').hidden = !state.rushNote;
@@ -1508,12 +1534,30 @@ button{font-family:'Space Grotesk',sans-serif}
     var ranIt = el('button', 'plan-btn is-close');
     ranIt.type = 'button';
     ranIt.textContent = 'I ran my trial';
+    // Disabled while a plan is generating too — state.busy is the same
+    // flag makePlan() sets, and clicking away mid-generation would just
+    // orphan that request. See getPlan below for the actual indicator.
+    ranIt.disabled = state.busy;
     ranIt.addEventListener('click', function () { beginTrialReport(state.messages); });
     row.appendChild(ranIt);
 
     var getPlan = el('button', 'plan-btn is-print');
     getPlan.type = 'button';
-    getPlan.textContent = 'Get my plan';
+    getPlan.disabled = state.busy;
+    // The plan can take several seconds — a click with no visible
+    // reaction reads as broken, so swap in text + the same three-dot
+    // motif used for "Scout is typing" the moment makePlan() sets
+    // planBusy, rather than leaving the button looking inert.
+    if (state.planBusy) {
+      getPlan.appendChild(document.createTextNode('Generating your plan'));
+      var dots = el('span', 'btn-dots');
+      dots.appendChild(el('i'));
+      dots.appendChild(el('i'));
+      dots.appendChild(el('i'));
+      getPlan.appendChild(dots);
+    } else {
+      getPlan.textContent = 'Get my plan';
+    }
     getPlan.addEventListener('click', makePlan);
     row.appendChild(getPlan);
 
@@ -1960,7 +2004,7 @@ button{font-family:'Space Grotesk',sans-serif}
     // holding a code destroy someone's work. Expiry is the erase path.
     sessionCode = null;
     returned = false;
-    setState({ started: false, messages: [], busy: false, planHtml: '', planOpen: false, rushNote: false, trialSuggested: false, trialCompleted: false, freeText: false });
+    setState({ started: false, messages: [], busy: false, planBusy: false, planHtml: '', planOpen: false, rushNote: false, trialSuggested: false, trialCompleted: false, freeText: false });
   }
 
   function makePlan() {
@@ -1976,7 +2020,7 @@ button{font-family:'Space Grotesk',sans-serif}
       return;
     }
     planAtCount = state.messages.length;
-    setState({ busy: true });
+    setState({ busy: true, planBusy: true });
 
     // The server flattens the conversation and picks PLAN_SYS itself.
     llm('plan', state.messages).then(function (html) {
@@ -1986,7 +2030,7 @@ button{font-family:'Space Grotesk',sans-serif}
       return Promise.all([import('./sanitize-plan.js'), guard()]).then(function (mods) {
         var clean = mods[0].sanitizePlan(html);
         var out = mods[1].screenOutput(clean);
-        if (!out.ok) { setState({ busy: false }); alert(out.message); return; }
+        if (!out.ok) { setState({ busy: false, planBusy: false }); alert(out.message); return; }
 
         var rush = false;
         try {
@@ -1994,10 +2038,10 @@ button{font-family:'Space Grotesk',sans-serif}
           rush = first > 0 && (Date.now() - first) < 24 * 3600 * 1000;
         } catch (e) {}
 
-        setState({ planHtml: clean, planOpen: true, busy: false, rushNote: rush });
+        setState({ planHtml: clean, planOpen: true, busy: false, planBusy: false, rushNote: rush });
       });
     }).catch(function (e) {
-      setState({ busy: false });
+      setState({ busy: false, planBusy: false });
       alert(e && e.code === 'NO_KEY'
         ? 'The plan machine is not switched on yet — the site owner needs to add the API key.'
         : (e && e.friendly) || 'Plan machine jammed. Try again in a minute.');
